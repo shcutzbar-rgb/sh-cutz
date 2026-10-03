@@ -59,6 +59,27 @@ Utan Supabase-variabler visar sajten statisk data, men bokning kräver databasen
 
    Svaret är `{ "due": n, "sent": n, "failed": n }`. Bokningar som gjorts mindre än 24 h före starten påminns inte (bekräftelsen är då färsk).
 
+### Adminpanel
+
+Adminpanelen ligger på `/admin` och använder Supabase Auth (e-post + lösenord). Endast användare i tabellen `admin_users` släpps in.
+
+1. Skapa användaren i Supabase: Authentication > Users > Add user (bekräfta e-posten). **Stäng av öppen registrering** under Authentication > Providers/Sign In, och aktivera helst MFA.
+2. Gör användaren till admin i SQL Editor (byt e-post, och `owner` mot `staff` vid behov):
+
+   ```sql
+   insert into admin_users (id, role)
+   select id, 'owner' from auth.users where email = 'du@example.com';
+   ```
+
+3. Logga in på `/admin/login`.
+
+| Roll | Får |
+| --- | --- |
+| `staff` | Översikt, kalender, bokningar (bekräfta, avboka, flytta, genomförd, no-show) |
+| `owner` | Allt ovan samt tjänster, frisörer (inkl. arbetstider och frånvaro) och inställningar |
+
+Behörighet kontrolleras på servern i layouten, på varje sida och i varje server action. Adminåtgärder körs med den inloggade användarens egen session, så RLS (`20261003110000_admin_roles.sql`) gäller som ett andra lager. Öppettider på sajten härleds från frisörernas arbetstider.
+
 ### Övriga kommandon
 
 | Kommando | Beskrivning |

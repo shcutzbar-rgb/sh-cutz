@@ -1,9 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Förnyar Supabase-sessionen och skriver tillbaka cookies. Behörighet kontrolleras
-// separat i layout och server actions; proxyn är inte ett säkerhetslager.
-export async function proxy(request: NextRequest) {
+// FÃ¶rnyar Supabase-sessionen och skriver tillbaka cookies. BehÃ¶righet kontrolleras
+// separat i layout och server actions; middleware är inte ett säkerhetslager.
+// middleware.ts (edge) i stället för proxy.ts (Node): proxy.ts dubblerar Next-runtimen i
+// Cloudflare-workern (ca 3,4 MiB gzip), vilket överskrider gränsen på 3 MiB för gratisplanen.
+export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return NextResponse.next();
