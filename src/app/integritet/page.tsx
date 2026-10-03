@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { siteConfig } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Integritetspolicy",
   description: "Hur SH-Cutz hanterar dina personuppgifter vid bokning.",
-  alternates: { canonical: "/integritet" },
-};
+  path: "/integritet",
+});
 
 // UTKAST: granska och komplettera (personuppgiftsansvarig, lagringstid) före launch.
 export default function IntegritetPage() {

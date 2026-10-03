@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { getActiveBarbers } from "@/lib/barbers";
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Frisörer",
   description: "Möt barberaren på SH-Cutz på Södermalm i Stockholm.",
-  alternates: { canonical: "/frisorer" },
-};
+  path: "/frisorer",
+});
 
 export const revalidate = 300;
 

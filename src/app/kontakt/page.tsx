@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { OpeningHoursTable } from "@/components/OpeningHoursTable";
 import { getOpeningHours } from "@/lib/hours";
+import { pageMetadata } from "@/lib/seo";
 import { getShopSettings } from "@/lib/shop-settings";
 import { siteConfig } from "@/lib/site";
-import type { Metadata } from "next";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Kontakt",
   description: `Hitta till SH-Cutz på ${siteConfig.address.street}, ${siteConfig.address.area}. Ring ${siteConfig.phone} eller boka online.`,
-  alternates: { canonical: "/kontakt" },
-};
+  path: "/kontakt",
+});
 
 export const revalidate = 300;
 

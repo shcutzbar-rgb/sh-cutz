@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { ServiceList } from "@/components/ServiceList";
 import { getActiveServices } from "@/lib/services";
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Tjänster och priser",
   description:
-    "Prislista hos SH-Cutz på Södermalm: fade 350 kr, skägg 180 kr, fade & skägg 400 kr och fade sidorna 280 kr.",
-  alternates: { canonical: "/tjanster" },
-};
+    "Prislista hos SH-Cutz på Södermalm: fade, skägg och fade & skägg med tydliga priser och tider. Boka online.",
+  path: "/tjanster",
+});
 
 export const revalidate = 300;
 

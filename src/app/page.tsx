@@ -4,16 +4,17 @@ import { OpeningHoursTable } from "@/components/OpeningHoursTable";
 import { ServiceList } from "@/components/ServiceList";
 import { getActiveServices } from "@/lib/services";
 import { getOpeningHours } from "@/lib/hours";
+import { pageMetadata } from "@/lib/seo";
 import { getShopSettings } from "@/lib/shop-settings";
 import { siteConfig } from "@/lib/site";
-import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: { absolute: "SH-Cutz – Barberare på Södermalm, Stockholm" },
+export const metadata = pageMetadata({
+  title: "SH-Cutz – Barberare på Södermalm, Stockholm",
+  absoluteTitle: true,
   description:
     "Boka fade och skäggtrim hos SH-Cutz, barbershop på Folkungagatan 87 på Södermalm i Stockholm. Tydliga priser och enkel onlinebokning.",
-  alternates: { canonical: "/" },
-};
+  path: "/",
+});
 
 export const revalidate = 300;
 

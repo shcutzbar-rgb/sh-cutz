@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { BookingFlow } from "@/components/BookingFlow";
 import { BOOKING_CONFIG } from "@/lib/booking-config";
 import { addDays, todayIn } from "@/lib/datetime";
@@ -7,11 +7,11 @@ import { getActiveServices } from "@/lib/services";
 import { getShopSettings } from "@/lib/shop-settings";
 import { siteConfig } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Boka tid",
   description: "Boka tid hos SH-Cutz på Södermalm. Välj tjänst, frisör och tid direkt online.",
-  alternates: { canonical: "/boka" },
-};
+  path: "/boka",
+});
 
 // Datumgränserna beräknas per anrop och får inte prerenderas.
 export const dynamic = "force-dynamic";

@@ -1,12 +1,12 @@
 import Image from "next/image";
 import { galleryImages } from "@/lib/gallery";
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Galleri",
   description: "Se exempel på fades och skäggtrimningar från SH-Cutz på Södermalm.",
-  alternates: { canonical: "/galleri" },
-};
+  path: "/galleri",
+});
 
 export default function GalleriPage() {
   return (
