@@ -44,3 +44,47 @@ export function isReminderDue(
   if (start - now.getTime() > leadHours * HOUR_MS) return false;
   return b.createdAt.getTime() <= start - leadHours * HOUR_MS;
 }
+
+export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed" | "no_show";
+
+export const BOOKING_STATUSES: BookingStatus[] = ["pending", "confirmed", "cancelled", "completed", "no_show"];
+
+export const STATUS_LABEL: Record<BookingStatus, string> = {
+  pending: "Väntar",
+  confirmed: "Bekräftad",
+  cancelled: "Avbokad",
+  completed: "Genomförd",
+  no_show: "No-show",
+};
+
+const TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
+  pending: ["confirmed", "cancelled"],
+  confirmed: ["cancelled", "completed", "no_show"],
+  cancelled: [],
+  completed: [],
+  no_show: [],
+};
+
+export function isBookingStatus(value: unknown): value is BookingStatus {
+  return typeof value === "string" && (BOOKING_STATUSES as string[]).includes(value);
+}
+
+/** Tillåtna statusbyten i admin. Genomförd och no-show kräver att tiden har startat. */
+export function canChangeStatus(
+  from: BookingStatus,
+  to: BookingStatus,
+  startAt: Date,
+  now: Date,
+): { ok: true } | { ok: false; error: string } {
+  if (!TRANSITIONS[from].includes(to)) {
+    return { ok: false, error: `Bokningen kan inte ändras från "${STATUS_LABEL[from]}" till "${STATUS_LABEL[to]}".` };
+  }
+  if ((to === "completed" || to === "no_show") && startAt.getTime() > now.getTime()) {
+    return { ok: false, error: "Kan bara markeras efter att tiden har startat." };
+  }
+  return { ok: true };
+}
+
+export function isMovable(status: string): boolean {
+  return ACTIVE_STATUSES.includes(status);
+}
