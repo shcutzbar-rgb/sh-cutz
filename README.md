@@ -30,11 +30,20 @@ Krav: Node.js 20.19+ (testat med 22) och npm.
 
 4. Öppna [http://localhost:3000](http://localhost:3000).
 
+### Databas (Supabase)
+
+Utan Supabase-variabler visar sajten statisk data, men bokning kräver databasen.
+
+1. Skapa ett Supabase-projekt och fyll i `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` och `SUPABASE_SERVICE_ROLE_KEY` i `.env.local` (och `.dev.vars`).
+2. Kör filerna i `supabase/migrations/` i ordning, antingen i Supabase SQL Editor eller med Supabase CLI (`supabase link` och `supabase db push`). De skapar tabeller, RLS-policies och seed för tjänster, frisör och arbetstider.
+3. Starta om `npm run dev`. `/boka` läser nu lediga tider från databasen.
+
 ### Övriga kommandon
 
 | Kommando | Beskrivning |
 | --- | --- |
 | `npm run lint` | Kör ESLint |
+| `npm test` | Kör enhetstester (vitest) |
 | `npm run build` | Produktionsbygge (Next.js) |
 | `npm run preview` | Förhandsgranska på Cloudflare-runtime (läser `.dev.vars`, kopiera från `.env.example`) |
 | `npm run deploy` | Bygg och deploya till Cloudflare |
