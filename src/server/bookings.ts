@@ -1,8 +1,8 @@
 import { dateIn } from "@/lib/datetime";
 import { siteConfig } from "@/lib/site";
-import { createServiceClient } from "@/lib/supabase";
 import type { CreateBookingInput } from "@/lib/validation/booking";
 import { getAvailability } from "./availability";
+import { db } from "./db";
 import { BookingError } from "./errors";
 import { generateCancelToken, hashToken } from "./tokens";
 
@@ -37,7 +37,7 @@ export async function createBooking(input: CreateBookingInput, now: Date = new D
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const cancelToken = generateCancelToken();
-    const { data, error } = await createServiceClient()
+    const { data, error } = await db()
       .from("bookings")
       .insert({
         service_id: service.id,
