@@ -88,3 +88,29 @@ export function canChangeStatus(
 export function isMovable(status: string): boolean {
   return ACTIVE_STATUSES.includes(status);
 }
+export type BookingStats = {
+  total: number;
+  completed: number;
+  noShow: number;
+  cancelled: number;
+  /** no_show / (completed + no_show); null utan avslutade bokningar. */
+  noShowRate: number | null;
+  /** cancelled / total; null utan bokningar. */
+  cancelRate: number | null;
+};
+
+export function computeStats(statuses: string[]): BookingStats {
+  const count = (s: string) => statuses.filter((x) => x === s).length;
+  const completed = count("completed");
+  const noShow = count("no_show");
+  const cancelled = count("cancelled");
+  const finished = completed + noShow;
+  return {
+    total: statuses.length,
+    completed,
+    noShow,
+    cancelled,
+    noShowRate: finished > 0 ? noShow / finished : null,
+    cancelRate: statuses.length > 0 ? cancelled / statuses.length : null,
+  };
+}

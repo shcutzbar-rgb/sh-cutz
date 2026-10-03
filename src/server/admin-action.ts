@@ -35,3 +35,10 @@ export function formObject(formData: FormData): Record<string, FormDataEntryValu
 export function firstIssue(error: { issues: { message: string }[] }): string {
   return error.issues[0]?.message ?? "Kontrollera uppgifterna.";
 }
+
+/** Tillåter bara interna adminsökvägar som återvändsmål (skydd mot open redirect). */
+export function safeAdminPath(value: unknown, fallback: string): string {
+  if (typeof value !== "string") return fallback;
+  if (!/^\/admin(\/[A-Za-z0-9\-_/]*)?(\?[A-Za-z0-9\-_.~%=&+]*)?$/.test(value)) return fallback;
+  return value.includes("//") ? fallback : value;
+}

@@ -50,7 +50,7 @@ export function mapBookingRow(row: any): AdminBooking {
   };
 }
 
-async function loadBooking(admin: AdminContext, id: string): Promise<AdminBooking | null> {
+export async function getBooking(admin: AdminContext, id: string): Promise<AdminBooking | null> {
   const { data, error } = await admin.supabase.from("bookings").select(BOOKING_SELECT).eq("id", id).maybeSingle();
   if (error) throw new BookingError("unavailable", "Databasfel.", 503);
   return data ? mapBookingRow(data) : null;
@@ -64,7 +64,7 @@ export async function changeBookingStatus(
   to: BookingStatus,
   now: Date = new Date(),
 ): Promise<ChangeResult> {
-  const booking = await loadBooking(admin, id);
+  const booking = await getBooking(admin, id);
   if (!booking) return { ok: false, error: "Bokningen finns inte." };
 
   const check = canChangeStatus(booking.status, to, booking.startAt, now);
@@ -90,7 +90,7 @@ export async function moveBooking(
   input: { bookingId: string; barberId: string; startAt: string },
   now: Date = new Date(),
 ): Promise<ChangeResult> {
-  const booking = await loadBooking(admin, input.bookingId);
+  const booking = await getBooking(admin, input.bookingId);
   if (!booking) return { ok: false, error: "Bokningen finns inte." };
   if (!isMovable(booking.status)) return { ok: false, error: "Endast väntande och bekräftade bokningar kan flyttas." };
 
