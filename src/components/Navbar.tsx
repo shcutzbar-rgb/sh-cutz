@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MobileMenu } from "@/components/MobileMenu";
 import { navLinks, siteConfig } from "@/lib/site";
 
 export function Navbar() {
@@ -30,28 +31,7 @@ export function Navbar() {
           </li>
         </ul>
 
-        <details className="group relative md:hidden">
-          <summary
-            aria-label="Meny"
-            className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-md border border-white/15 [&::-webkit-details-marker]:hidden"
-          >
-            <span aria-hidden className="text-xl leading-none group-open:hidden">
-              ☰
-            </span>
-            <span aria-hidden className="hidden text-xl leading-none group-open:block">
-              ✕
-            </span>
-          </summary>
-          <ul className="absolute right-0 top-12 w-56 rounded-lg border border-white/10 bg-background p-2 shadow-xl">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href} className="block rounded-md px-3 py-2 hover:bg-white/10">
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </details>
+        <MobileMenu links={navLinks} />
       </nav>
     </header>
   );

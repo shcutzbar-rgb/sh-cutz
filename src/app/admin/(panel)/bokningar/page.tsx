@@ -36,17 +36,18 @@ function ActionButton({
   confirm?: string;
   className?: string;
 }) {
+  const name = `${label}: ${booking.customerName}, ${formatTimeIn(booking.startAt, siteConfig.timezone)}`;
   return (
     <form action={setBookingStatus}>
       <input type="hidden" name="id" value={booking.id} />
       <input type="hidden" name="status" value={to} />
       <input type="hidden" name="returnTo" value={returnTo} />
       {confirm ? (
-        <ConfirmButton message={confirm} className={className ?? ui.secondary}>
+        <ConfirmButton message={confirm} className={className ?? ui.secondary} ariaLabel={name}>
           {label}
         </ConfirmButton>
       ) : (
-        <button type="submit" className={className ?? ui.secondary}>
+        <button type="submit" className={className ?? ui.secondary} aria-label={name}>
           {label}
         </button>
       )}
@@ -194,7 +195,7 @@ export default async function BookingsPage({
                   <ActionButton booking={b} to="no_show" label="No-show" returnTo={returnTo} />
                 )}
                 {isMovable(b.status) && (
-                  <Link href={`/admin/bokningar/${b.id}/flytta`} className={ui.secondary}>
+                  <Link href={`/admin/bokningar/${b.id}/flytta`} className={ui.secondary} aria-label={`Flytta: ${b.customerName}, ${formatTimeIn(b.startAt, tz)}`}>
                     Flytta
                   </Link>
                 )}

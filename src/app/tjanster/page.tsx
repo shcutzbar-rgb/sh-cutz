@@ -20,7 +20,7 @@ export default async function TjansterPage() {
         Tydliga priser och tidsåtgång. Boka online när det passar dig.
       </p>
       <div className="mt-8">
-        <ServiceList items={await getActiveServices()} />
+        <ServiceList items={await getActiveServices()} headingLevel="h2" />
       </div>
       <Link
         href="/boka"

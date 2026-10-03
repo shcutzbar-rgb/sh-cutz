@@ -250,7 +250,11 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, tur
               void loadSlots(e.target.value, service, barber);
             }}
             className={`${inputClass} max-w-xs`}
+            aria-describedby="date-hint"
           />
+          <p id="date-hint" className="mt-1 text-xs text-foreground/60">
+            Du kan boka från {minDate} till {maxDate}.
+          </p>
 
           <div className="mt-6" aria-live="polite">
             {slotsLoading && <p className="text-foreground/70">Hämtar lediga tider...</p>}
