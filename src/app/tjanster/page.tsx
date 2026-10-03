@@ -10,7 +10,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/tjanster" },
 };
 
-export default function TjansterPage() {
+export const revalidate = 300;
+
+export default async function TjansterPage() {
   return (
     <section className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
       <h1 className="text-3xl font-bold tracking-tight">Tjänster och priser</h1>
@@ -18,7 +20,7 @@ export default function TjansterPage() {
         Tydliga priser och tidsåtgång. Boka online när det passar dig.
       </p>
       <div className="mt-8">
-        <ServiceList items={getActiveServices()} />
+        <ServiceList items={await getActiveServices()} />
       </div>
       <Link
         href="/boka"

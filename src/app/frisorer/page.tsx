@@ -8,12 +8,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/frisorer" },
 };
 
-export default function FrisorerPage() {
+export const revalidate = 300;
+
+export default async function FrisorerPage() {
+  const barbers = await getActiveBarbers();
+
   return (
     <section className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
       <h1 className="text-3xl font-bold tracking-tight">Frisörer</h1>
       <ul className="mt-8 grid gap-4 sm:grid-cols-2">
-        {getActiveBarbers().map((barber) => (
+        {barbers.map((barber) => (
           <li key={barber.id} className="flex gap-4 rounded-xl border border-white/10 p-5">
             <div
               aria-hidden

@@ -13,12 +13,15 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-export default function Home() {
-  const featured = getActiveServices().slice(0, 3);
+export const revalidate = 300;
+
+export default async function Home() {
+  const services = await getActiveServices();
+  const featured = services.slice(0, 3);
 
   return (
     <>
-      <JsonLd data={buildHairSalonJsonLd()} />
+      <JsonLd data={buildHairSalonJsonLd(services)} />
 
       <section className="mx-auto max-w-3xl px-4 py-16 text-center sm:py-24">
         <p className="text-sm uppercase tracking-widest text-accent">Södermalm, Stockholm</p>

@@ -1,9 +1,9 @@
 import { openingHours, weekdayNamesSchema } from "@/lib/hours";
-import { getActiveServices } from "@/lib/services";
 import { siteConfig } from "@/lib/site";
+import type { Service } from "@/types/shop";
 
-export function buildHairSalonJsonLd() {
-  const prices = getActiveServices().map((s) => s.priceSek);
+export function buildHairSalonJsonLd(services: Service[]) {
+  const prices = services.map((s) => s.priceSek);
 
   return {
     "@context": "https://schema.org",

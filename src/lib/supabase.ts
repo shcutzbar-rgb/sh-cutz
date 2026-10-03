@@ -6,6 +6,10 @@ function requireEnv(name: string): string {
   return value;
 }
 
+export function isSupabaseConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+}
+
 /** Klient med anon-nyckel (respekterar RLS). */
 export function createAnonClient() {
   return createClient(
