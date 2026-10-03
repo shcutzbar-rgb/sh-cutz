@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Footer } from "@/components/Footer";
+import { HidePublicChrome } from "@/components/HidePublicChrome";
 import { MobileBookCta } from "@/components/MobileBookCta";
 import { Navbar } from "@/components/Navbar";
 import { siteConfig } from "@/lib/site";
@@ -44,12 +45,16 @@ export default function RootLayout({
 				>
 					Hoppa till innehåll
 				</a>
-				<Navbar />
+				<HidePublicChrome>
+					<Navbar />
+				</HidePublicChrome>
 				<main id="main" className="flex-1">
 					{children}
 				</main>
-				<Footer />
-				<MobileBookCta />
+				<HidePublicChrome>
+					<Footer />
+					<MobileBookCta />
+				</HidePublicChrome>
 			</body>
 		</html>
 	);
