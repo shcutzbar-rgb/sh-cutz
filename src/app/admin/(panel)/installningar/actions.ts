@@ -22,6 +22,8 @@ export async function saveSettings(formData: FormData) {
     postal_code: v.postalCode || null,
     booking_interval_minutes: v.bookingIntervalMinutes,
     cancellation_policy: v.cancellationPolicy,
+    latitude: v.latitude === "" ? null : Number(v.latitude),
+    longitude: v.longitude === "" ? null : Number(v.longitude),
   });
   if (error) fail(PATH, dbErrorMessage(error));
 

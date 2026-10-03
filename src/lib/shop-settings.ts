@@ -11,6 +11,8 @@ export type ShopSettings = {
   postalCode: string | null;
   bookingIntervalMinutes: number;
   cancellationPolicy: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 /** Svenskt nummer till tel:-länk: inledande 0 blir +46. */
@@ -32,6 +34,8 @@ export const staticShopSettings: ShopSettings = {
   postalCode: null,
   bookingIntervalMinutes: 15,
   cancellationPolicy: "",
+  latitude: null,
+  longitude: null,
 };
 
 export async function getShopSettings(): Promise<ShopSettings> {
@@ -39,7 +43,7 @@ export async function getShopSettings(): Promise<ShopSettings> {
     try {
       const { data, error } = await createAnonClient()
         .from("shop_settings")
-        .select("shop_name,phone,email,address_line,city,postal_code,booking_interval_minutes,cancellation_policy")
+        .select("shop_name,phone,email,address_line,city,postal_code,booking_interval_minutes,cancellation_policy,latitude,longitude")
         .eq("id", 1)
         .maybeSingle();
       if (!error && data) {
@@ -53,6 +57,8 @@ export async function getShopSettings(): Promise<ShopSettings> {
           postalCode: data.postal_code,
           bookingIntervalMinutes: data.booking_interval_minutes,
           cancellationPolicy: data.cancellation_policy,
+          latitude: data.latitude === null ? null : Number(data.latitude),
+          longitude: data.longitude === null ? null : Number(data.longitude),
         };
       }
       if (error) console.error("Kunde inte läsa shop_settings:", error.message);

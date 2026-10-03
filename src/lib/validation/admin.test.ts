@@ -73,6 +73,8 @@ describe("settingsSchema", () => {
     postalCode: "",
     bookingIntervalMinutes: "15",
     cancellationPolicy: "",
+    latitude: "",
+    longitude: "",
   };
 
   it("godkänner giltiga inställningar med valfri e-post", () => {
@@ -84,5 +86,12 @@ describe("settingsSchema", () => {
     expect(settingsSchema.safeParse({ ...ok, email: "fel" }).success).toBe(false);
     expect(settingsSchema.safeParse({ ...ok, bookingIntervalMinutes: "1" }).success).toBe(false);
     expect(settingsSchema.safeParse({ ...ok, shopName: "" }).success).toBe(false);
+  });
+
+  it("kräver både koordinater eller ingen, inom giltigt intervall", () => {
+    expect(settingsSchema.safeParse({ ...ok, latitude: "59.3145", longitude: "18.0735" }).success).toBe(true);
+    expect(settingsSchema.safeParse({ ...ok, latitude: "59.3145" }).success).toBe(false);
+    expect(settingsSchema.safeParse({ ...ok, latitude: "91", longitude: "18" }).success).toBe(false);
+    expect(settingsSchema.safeParse({ ...ok, latitude: "abc", longitude: "18" }).success).toBe(false);
   });
 });

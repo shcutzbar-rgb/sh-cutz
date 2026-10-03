@@ -19,7 +19,7 @@ export default async function SettingsPage({
 
   const { data: s } = await admin.supabase
     .from("shop_settings")
-    .select("shop_name,phone,email,address_line,city,postal_code,booking_interval_minutes,cancellation_policy")
+    .select("shop_name,phone,email,address_line,city,postal_code,booking_interval_minutes,cancellation_policy,latitude,longitude")
     .eq("id", 1)
     .maybeSingle();
   const hours = await getOpeningHours();
@@ -81,6 +81,18 @@ export default async function SettingsPage({
             required
             className={ui.input}
           />
+        </div>
+        <div>
+          <label htmlFor="latitude" className={ui.label}>
+            Latitud (valfri, för Google)
+          </label>
+          <input id="latitude" name="latitude" inputMode="decimal" defaultValue={s?.latitude ?? ""} className={ui.input} />
+        </div>
+        <div>
+          <label htmlFor="longitude" className={ui.label}>
+            Longitud (valfri, för Google)
+          </label>
+          <input id="longitude" name="longitude" inputMode="decimal" defaultValue={s?.longitude ?? ""} className={ui.input} />
         </div>
         <div>
           <p className={ui.label}>Tidszon</p>

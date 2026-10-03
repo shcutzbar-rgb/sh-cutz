@@ -12,7 +12,9 @@ export function buildHairSalonJsonLd(services: Service[], openingHours: OpeningH
     name: shop.shopName,
     description: siteConfig.description,
     url: siteConfig.url,
+    image: `${siteConfig.url}/opengraph-image.png`,
     telephone: shop.phoneHref.replace("tel:", ""),
+    ...(shop.email ? { email: shop.email } : {}),
     priceRange: `${Math.min(...prices)}-${Math.max(...prices)} SEK`,
     address: {
       "@type": "PostalAddress",
@@ -21,6 +23,9 @@ export function buildHairSalonJsonLd(services: Service[], openingHours: OpeningH
       ...(shop.postalCode ? { postalCode: shop.postalCode } : {}),
       addressCountry: "SE",
     },
+    ...(shop.latitude !== null && shop.longitude !== null
+      ? { geo: { "@type": "GeoCoordinates", latitude: shop.latitude, longitude: shop.longitude } }
+      : {}),
     openingHoursSpecification: openingHours
       .filter((h) => h.opens && h.closes)
       .map((h) => ({

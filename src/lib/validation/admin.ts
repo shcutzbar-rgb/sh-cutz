@@ -57,17 +57,30 @@ export const timeOffSchema = z
 
 export const idSchema = z.object({ id: z.uuid() });
 
-export const settingsSchema = z.object({
-  shopName: z.string().trim().min(1, "Ange butikens namn").max(100),
-  phone: z.string().trim().min(3, "Ange ett telefonnummer").max(30),
-  email: z
+const coordinate = (limit: number, label: string) =>
+  z
     .string()
     .trim()
-    .max(254)
-    .refine((v) => v === "" || z.email().safeParse(v).success, "Ange en giltig e-postadress"),
-  addressLine: z.string().trim().min(1, "Ange en adress").max(200),
-  city: z.string().trim().min(1, "Ange en ort").max(100),
-  postalCode: z.string().trim().max(10),
-  bookingIntervalMinutes: int(5, 120, "Intervallet"),
-  cancellationPolicy: z.string().trim().max(2000, "Policytexten är för lång"),
-});
+    .refine((v) => v === "" || (Number.isFinite(Number(v)) && Math.abs(Number(v)) <= limit), `${label} måste vara ett tal mellan -${limit} och ${limit}`);
+
+export const settingsSchema = z
+  .object({
+    shopName: z.string().trim().min(1, "Ange butikens namn").max(100),
+    phone: z.string().trim().min(3, "Ange ett telefonnummer").max(30),
+    email: z
+      .string()
+      .trim()
+      .max(254)
+      .refine((v) => v === "" || z.email().safeParse(v).success, "Ange en giltig e-postadress"),
+    addressLine: z.string().trim().min(1, "Ange en adress").max(200),
+    city: z.string().trim().min(1, "Ange en ort").max(100),
+    postalCode: z.string().trim().max(10),
+    bookingIntervalMinutes: int(5, 120, "Intervallet"),
+    cancellationPolicy: z.string().trim().max(2000, "Policytexten är för lång"),
+    latitude: coordinate(90, "Latitud"),
+    longitude: coordinate(180, "Longitud"),
+  })
+  .refine((v) => (v.latitude === "") === (v.longitude === ""), {
+    message: "Ange både latitud och longitud, eller ingen av dem",
+    path: ["longitude"],
+  });
