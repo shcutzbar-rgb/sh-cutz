@@ -1,9 +1,9 @@
 import { BOOKING_CONFIG } from "@/lib/booking-config";
 import { addDays, dayRange, isValidDateString, todayIn, weekdayOf } from "@/lib/datetime";
 import { siteConfig } from "@/lib/site";
-import { createServiceClient } from "@/lib/supabase";
 import type { Service } from "@/types/shop";
 import { mapServiceRow } from "@/lib/services";
+import { db, failOnError } from "./db";
 import { BookingError } from "./errors";
 import { computeSlots, type Interval } from "./slots";
 
@@ -12,20 +12,6 @@ export type Availability = {
   barber: { id: string; name: string };
   slots: Date[];
 };
-
-function db() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new BookingError("unavailable", "Bokning är tillfälligt otillgänglig.", 503);
-  }
-  return createServiceClient();
-}
-
-function failOnError(error: { message: string } | null) {
-  if (error) {
-    console.error("Databasfel:", error.message);
-    throw new BookingError("unavailable", "Bokning är tillfälligt otillgänglig.", 503);
-  }
-}
 
 export async function getAvailability(
   params: { serviceId: string; barberId: string; date: string },
