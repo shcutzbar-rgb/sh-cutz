@@ -9,7 +9,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "sh-cutz",
-	"main": ".open-next/worker.js",
+	"main": "worker.ts",
 	"compatibility_date": "2026-09-26",
 	"compatibility_flags": [
 		"global_fetch_strictly_public"
@@ -33,6 +33,10 @@
 	],
 	"observability": {
 		"enabled": true
+	},
+	// Påminnelser: körs varje hel timme (UTC) via scheduled() i worker.ts
+	"triggers": {
+		"crons": ["0 * * * *"]
 	},
 	"upload_source_maps": true
 	/**
