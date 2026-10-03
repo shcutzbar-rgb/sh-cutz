@@ -39,7 +39,10 @@ export function Footer() {
         </div>
       </div>
       <p className="border-t border-white/10 py-4 text-center text-xs text-foreground/50">
-        © {new Date().getFullYear()} {siteConfig.name}. Alla rättigheter förbehållna.
+        © {new Date().getFullYear()} {siteConfig.name}. Alla rättigheter förbehållna.{" "}
+        <Link href="/integritet" className="underline underline-offset-2 hover:text-foreground">
+          Integritetspolicy
+        </Link>
       </p>
     </footer>
   );
