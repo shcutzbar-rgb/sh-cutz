@@ -36,12 +36,17 @@ export function dayRange(date: string, timezone: string): { start: Date; end: Da
 }
 
 export function todayIn(timezone: string, now: Date = new Date()): string {
+  return dateIn(timezone, now);
+}
+
+/** Kalenderdatum "YYYY-MM-DD" för en tidpunkt i given tidszon. */
+export function dateIn(timezone: string, value: Date): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(now);
+  }).format(value);
 }
 
 export function formatTimeIn(value: Date | string, timezone: string): string {
