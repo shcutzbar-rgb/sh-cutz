@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// FÃ¶rnyar Supabase-sessionen och skriver tillbaka cookies. BehÃ¶righet kontrolleras
+// Förnyar Supabase-sessionen och skriver tillbaka cookies. Behörighet kontrolleras
 // separat i layout och server actions; middleware är inte ett säkerhetslager.
 // middleware.ts (edge) i stället för proxy.ts (Node): proxy.ts dubblerar Next-runtimen i
 // Cloudflare-workern (ca 3,4 MiB gzip), vilket överskrider gränsen på 3 MiB för gratisplanen.
