@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { createBookingSchema } from "@/lib/validation/booking";
 import { createBooking } from "@/server/bookings";
 import { BookingError } from "@/server/errors";
+import { sendConfirmationEmail } from "@/server/notifications";
 import { clientIp, isRateLimited, isSameOrigin } from "@/server/request-guards";
 
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -41,6 +42,14 @@ export async function POST(request: Request) {
 
   try {
     const booking = await createBooking(parsed.data);
+
+    // E-post skickas efter svaret och kan aldrig fälla bokningen.
+    const { customerName, customerEmail } = parsed.data;
+    if (customerEmail) {
+      const cancelUrl = `${new URL(request.url).origin}/avboka/${booking.cancelToken}`;
+      after(() => sendConfirmationEmail({ ...booking, customerName }, customerEmail, cancelUrl));
+    }
+
     return NextResponse.json({ booking }, { status: 201, headers: NO_STORE });
   } catch (err) {
     if (err instanceof BookingError) {

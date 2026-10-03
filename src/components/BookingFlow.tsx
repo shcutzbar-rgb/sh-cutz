@@ -442,7 +442,8 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate }: P
           <div className="mt-6 rounded-xl border border-accent/40 p-4 text-sm">
             <p className="font-semibold">Spara din avbokningslänk</p>
             <p className="mt-1 text-foreground/70">
-              Länken visas bara här. Använd den om du behöver avboka.
+              Länken visas bara här. Om du angav e-post skickar vi även en bekräftelse med länken.
+              Använd den om du behöver avboka.
             </p>
             <a href={cancelUrl} className="mt-2 block break-all text-accent underline underline-offset-4">
               {cancelUrl}
