@@ -5,6 +5,7 @@ import { createBooking } from "@/server/bookings";
 import { BookingError } from "@/server/errors";
 import { sendConfirmationEmail } from "@/server/notifications";
 import { clientIp, isRateLimited, isSameOrigin } from "@/server/request-guards";
+import { CAPTCHA_ERROR, verifyTurnstile } from "@/server/turnstile";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 const MAX_BODY_BYTES = 10_000;
@@ -38,6 +39,10 @@ export async function POST(request: Request) {
       { error: "Kontrollera uppgifterna.", fields: z.flattenError(parsed.error).fieldErrors },
       { status: 400, headers: NO_STORE },
     );
+  }
+
+  if (!(await verifyTurnstile(parsed.data.turnstileToken, clientIp(request)))) {
+    return NextResponse.json({ error: CAPTCHA_ERROR, code: "captcha" }, { status: 400, headers: NO_STORE });
   }
 
   try {

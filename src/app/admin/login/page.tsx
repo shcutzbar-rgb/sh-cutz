@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Turnstile } from "@/components/Turnstile";
+import { getTurnstileSiteKey } from "@/lib/turnstile";
 import { resolveAdmin } from "@/server/admin-auth";
 import { login } from "./actions";
 
@@ -15,6 +17,7 @@ const MESSAGES: Record<string, string> = {
   forbidden: "Kontot har inte tillgång till adminpanelen.",
   rate: "För många försök. Vänta en stund och försök igen.",
   config: "Inloggning är inte konfigurerad (Supabase saknas).",
+  captcha: "Verifieringen misslyckades. Ladda om sidan och försök igen.",
 };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
@@ -56,6 +59,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             className={inputClass}
           />
         </div>
+        <Turnstile siteKey={getTurnstileSiteKey()} name="cf-turnstile-response" />
         <button
           type="submit"
           className="w-full rounded-full bg-accent px-6 py-3 font-semibold text-black hover:bg-accent/90"

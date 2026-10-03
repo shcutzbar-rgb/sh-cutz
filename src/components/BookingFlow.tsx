@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Turnstile } from "@/components/Turnstile";
 import { formatDateLongIn, formatTimeIn } from "@/lib/datetime";
 import { formatDuration, formatPrice } from "@/lib/format";
 import { customerSchema, type CustomerFormValues } from "@/lib/validation/booking";
@@ -15,6 +16,7 @@ type Props = {
   timezone: string;
   minDate: string;
   maxDate: string;
+  turnstileSiteKey?: string;
 };
 
 type Confirmation = {
@@ -37,7 +39,7 @@ const buttonSecondary = "rounded-full border border-white/20 px-6 py-3 font-medi
 const inputClass =
   "mt-1 w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-foreground placeholder:text-foreground/40";
 
-export function BookingFlow({ services, barbers, timezone, minDate, maxDate }: Props) {
+export function BookingFlow({ services, barbers, timezone, minDate, maxDate, turnstileSiteKey }: Props) {
   const [step, setStep] = useState<Step>("service");
   const [service, setService] = useState<Service | null>(null);
   const [barber, setBarber] = useState<Barber | null>(null);
@@ -49,6 +51,14 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate }: P
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [cancelUrl, setCancelUrl] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaKey, setCaptchaKey] = useState(0);
+
+  // Token går bara att använda en gång: montera om widgeten efter varje misslyckat försök.
+  function resetCaptcha() {
+    setCaptchaToken("");
+    setCaptchaKey((k) => k + 1);
+  }
 
   const headingRef = useRef<HTMLHeadingElement>(null);
   const slotsRequest = useRef(0);
@@ -103,6 +113,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate }: P
           barberId: barber.id,
           startAt,
           website: (document.getElementById("website") as HTMLInputElement | null)?.value ?? "",
+          turnstileToken: captchaToken,
         }),
       });
       const data = (await res.json()) as {
@@ -119,6 +130,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate }: P
         return;
       }
 
+      resetCaptcha();
       if (res.status === 400 && data.fields) {
         for (const [name, messages] of Object.entries(data.fields)) {
           if (messages?.[0]) setError(name as keyof CustomerFormValues, { message: messages[0] });
@@ -132,6 +144,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate }: P
       }
       setSubmitError(data.error ?? "Något gick fel. Försök igen.");
     } catch {
+      resetCaptcha();
       setSubmitError("Kunde inte nå servern. Kontrollera anslutningen och försök igen.");
     }
   }
@@ -411,11 +424,17 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate }: P
               </p>
             )}
 
+            <Turnstile key={captchaKey} siteKey={turnstileSiteKey} onToken={setCaptchaToken} />
+
             <div className="flex gap-3">
               <button type="button" onClick={() => setStep("time")} className={buttonSecondary}>
                 Tillbaka
               </button>
-              <button type="submit" disabled={isSubmitting} className={buttonPrimary}>
+              <button
+                type="submit"
+                disabled={isSubmitting || (Boolean(turnstileSiteKey) && !captchaToken)}
+                className={buttonPrimary}
+              >
                 {isSubmitting ? "Bokar..." : "Boka tid"}
               </button>
             </div>

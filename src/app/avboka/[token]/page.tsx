@@ -6,6 +6,7 @@ import { evaluateCancellation } from "@/lib/booking-rules";
 import { formatDateLongIn, formatTimeIn } from "@/lib/datetime";
 import { formatPrice } from "@/lib/format";
 import { siteConfig } from "@/lib/site";
+import { getTurnstileSiteKey } from "@/lib/turnstile";
 import { findBookingByToken, type BookingByToken } from "@/server/cancellation";
 import { BookingError } from "@/server/errors";
 
@@ -95,7 +96,7 @@ export default async function AvbokaPage({ params }: { params: Promise<{ token: 
       <h1 className="text-3xl font-bold tracking-tight">Avboka tid</h1>
       <p className="mt-2 text-foreground/70">Kontrollera att det är rätt tid och bekräfta avbokningen.</p>
       <Summary booking={booking} />
-      <CancelBooking token={token} phone={siteConfig.phone} />
+      <CancelBooking token={token} phone={siteConfig.phone} turnstileSiteKey={getTurnstileSiteKey()} />
     </section>
   );
 }

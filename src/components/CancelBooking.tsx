@@ -2,12 +2,23 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { Turnstile } from "@/components/Turnstile";
 
 type Status = "idle" | "loading" | "done" | "error";
 
-export function CancelBooking({ token, phone }: { token: string; phone: string }) {
+export function CancelBooking({
+  token,
+  phone,
+  turnstileSiteKey,
+}: {
+  token: string;
+  phone: string;
+  turnstileSiteKey?: string;
+}) {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaKey, setCaptchaKey] = useState(0);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -21,7 +32,7 @@ export function CancelBooking({ token, phone }: { token: string; phone: string }
       const res = await fetch("/api/bookings/cancel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, turnstileToken: captchaToken }),
       });
       if (res.ok) {
         setStatus("done");
@@ -33,6 +44,8 @@ export function CancelBooking({ token, phone }: { token: string; phone: string }
       setMessage(`Kunde inte nå servern. Försök igen eller ring ${phone}.`);
     }
     setStatus("error");
+    setCaptchaToken("");
+    setCaptchaKey((k) => k + 1);
   }
 
   if (status === "done") {
@@ -56,10 +69,11 @@ export function CancelBooking({ token, phone }: { token: string; phone: string }
           {message}
         </p>
       )}
+      <Turnstile key={captchaKey} siteKey={turnstileSiteKey} onToken={setCaptchaToken} />
       <button
         type="button"
         onClick={cancel}
-        disabled={status === "loading"}
+        disabled={status === "loading" || (Boolean(turnstileSiteKey) && !captchaToken)}
         className="rounded-full bg-accent px-8 py-3 font-semibold text-black hover:bg-accent/90 disabled:opacity-50"
       >
         {status === "loading" ? "Avbokar..." : "Bekräfta avbokning"}

@@ -6,6 +6,7 @@ import { getActiveBarbers } from "@/lib/barbers";
 import { getActiveServices } from "@/lib/services";
 import { getShopSettings } from "@/lib/shop-settings";
 import { siteConfig } from "@/lib/site";
+import { getTurnstileSiteKey } from "@/lib/turnstile";
 
 export const metadata = pageMetadata({
   title: "Boka tid",
@@ -33,6 +34,7 @@ export default async function BokaPage() {
           timezone={siteConfig.timezone}
           minDate={today}
           maxDate={addDays(today, BOOKING_CONFIG.maxDaysAhead)}
+          turnstileSiteKey={getTurnstileSiteKey()}
         />
       </div>
     </section>

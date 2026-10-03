@@ -6,6 +6,7 @@ import { z } from "zod";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { createSessionClient } from "@/lib/supabase-server";
 import { isRateLimited } from "@/server/request-guards";
+import { verifyTurnstile } from "@/server/turnstile";
 
 const loginSchema = z.object({
   email: z.string().trim().min(1).max(254),
@@ -17,6 +18,9 @@ export async function login(formData: FormData) {
   const ip = h.get("cf-connecting-ip") ?? h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (isRateLimited(`login:${ip}`, 10, 10 * 60_000)) redirect("/admin/login?error=rate");
   if (!isSupabaseConfigured()) redirect("/admin/login?error=config");
+  if (!(await verifyTurnstile(formData.get("cf-turnstile-response")?.toString(), ip))) {
+    redirect("/admin/login?error=captcha");
+  }
 
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) redirect("/admin/login?error=invalid");

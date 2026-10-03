@@ -24,6 +24,7 @@ export const createBookingSchema = customerSchema.extend({
   startAt: z.iso.datetime({ offset: true }),
   // Honeypot: ska vara tom för riktiga användare.
   website: z.string().max(0).optional(),
+  turnstileToken: z.string().max(2048).optional(),
 });
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;

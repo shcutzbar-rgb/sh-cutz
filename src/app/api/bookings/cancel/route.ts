@@ -6,9 +6,13 @@ import { cancelBookingByToken } from "@/server/cancellation";
 import { BookingError } from "@/server/errors";
 import { sendCancelledEmail } from "@/server/notifications";
 import { clientIp, isRateLimited, isSameOrigin } from "@/server/request-guards";
+import { CAPTCHA_ERROR, verifyTurnstile } from "@/server/turnstile";
 
 const NO_STORE = { "Cache-Control": "no-store" };
-const bodySchema = z.object({ token: z.string().refine(isValidCancelToken) });
+const bodySchema = z.object({
+  token: z.string().refine(isValidCancelToken),
+  turnstileToken: z.string().max(2048).optional(),
+});
 
 const INVALID = "Länken är ogiltig eller har redan använts.";
 
@@ -26,6 +30,10 @@ export async function POST(request: Request) {
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: INVALID }, { status: 404, headers: NO_STORE });
+  }
+
+  if (!(await verifyTurnstile(parsed.data.turnstileToken, clientIp(request)))) {
+    return NextResponse.json({ error: CAPTCHA_ERROR, code: "captcha" }, { status: 400, headers: NO_STORE });
   }
 
   try {

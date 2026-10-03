@@ -59,6 +59,14 @@ Utan Supabase-variabler visar sajten statisk data, men bokning kräver databasen
 
    Svaret är `{ "due": n, "sent": n, "failed": n, "anonymized": n }`. Samma timjobb anonymiserar personuppgifter i bokningar äldre än `retentionMonths` (12) månader, så som `/integritet` lovar. Bokningar som gjorts mindre än 24 h före starten påminns inte (bekräftelsen är då färsk).
 
+### Bot-skydd (Cloudflare Turnstile)
+
+Bokning, avbokning och admininloggning skyddas av Turnstile (utöver rate limit, same-origin-kontroll och honeypot).
+
+1. Skapa en Turnstile-widget i Cloudflare och sätt `TURNSTILE_SITE_KEY` samt `TURNSTILE_SECRET_KEY` (`wrangler secret put TURNSTILE_SECRET_KEY`; sajtnyckeln kan ligga som vanlig variabel).
+2. Utan `TURNSTILE_SECRET_KEY` hoppas kontrollen över i utveckling men **blockerar allt i produktion** (`NODE_ENV=production`, alltså även `npm run preview`). Använd Cloudflares testnycklar (se `.env.example`) för lokal preview.
+3. Sätt `NEXT_PUBLIC_SITE_URL` till produktionsadressen **vid bygge**; den används i sitemap, robots och canonical-länkar.
+
 ### Adminpanel
 
 Adminpanelen ligger på `/admin` och använder Supabase Auth (e-post + lösenord). Endast användare i tabellen `admin_users` släpps in.
