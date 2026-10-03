@@ -1,22 +1,24 @@
-import { openingHours, weekdayNamesSchema } from "@/lib/hours";
+import { weekdayNamesSchema } from "@/lib/hours";
+import type { ShopSettings } from "@/lib/shop-settings";
 import { siteConfig } from "@/lib/site";
-import type { Service } from "@/types/shop";
+import type { OpeningHours, Service } from "@/types/shop";
 
-export function buildHairSalonJsonLd(services: Service[]) {
+export function buildHairSalonJsonLd(services: Service[], openingHours: OpeningHours[], shop: ShopSettings) {
   const prices = services.map((s) => s.priceSek);
 
   return {
     "@context": "https://schema.org",
     "@type": "HairSalon",
-    name: siteConfig.name,
+    name: shop.shopName,
     description: siteConfig.description,
     url: siteConfig.url,
-    telephone: siteConfig.phoneHref.replace("tel:", ""),
+    telephone: shop.phoneHref.replace("tel:", ""),
     priceRange: `${Math.min(...prices)}-${Math.max(...prices)} SEK`,
     address: {
       "@type": "PostalAddress",
-      streetAddress: siteConfig.address.street,
-      addressLocality: siteConfig.address.city,
+      streetAddress: shop.addressLine,
+      addressLocality: shop.city,
+      ...(shop.postalCode ? { postalCode: shop.postalCode } : {}),
       addressCountry: "SE",
     },
     openingHoursSpecification: openingHours

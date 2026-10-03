@@ -3,6 +3,8 @@ import { JsonLd, buildHairSalonJsonLd } from "@/components/JsonLd";
 import { OpeningHoursTable } from "@/components/OpeningHoursTable";
 import { ServiceList } from "@/components/ServiceList";
 import { getActiveServices } from "@/lib/services";
+import { getOpeningHours } from "@/lib/hours";
+import { getShopSettings } from "@/lib/shop-settings";
 import { siteConfig } from "@/lib/site";
 import type { Metadata } from "next";
 
@@ -16,12 +18,12 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 export default async function Home() {
-  const services = await getActiveServices();
+  const [services, hours, shop] = await Promise.all([getActiveServices(), getOpeningHours(), getShopSettings()]);
   const featured = services.slice(0, 3);
 
   return (
     <>
-      <JsonLd data={buildHairSalonJsonLd(services)} />
+      <JsonLd data={buildHairSalonJsonLd(services, hours, shop)} />
 
       <section className="mx-auto max-w-3xl px-4 py-16 text-center sm:py-24">
         <p className="text-sm uppercase tracking-widest text-accent">Södermalm, Stockholm</p>
@@ -58,7 +60,7 @@ export default async function Home() {
           Öppettider
         </h2>
         <div className="mt-6 max-w-sm">
-          <OpeningHoursTable />
+          <OpeningHoursTable hours={hours} />
         </div>
       </section>
 
@@ -67,7 +69,7 @@ export default async function Home() {
           Din barbershop på Södermalm
         </h2>
         <p className="mt-4 text-foreground/70">
-          Letar du efter en barberare på Södermalm? SH-Cutz ligger på {siteConfig.address.street} och
+          Letar du efter en barberare på Södermalm? SH-Cutz ligger på {shop.addressLine} och
           erbjuder fade, skäggtrimning och kombinationen fade &amp; skägg. Oavsett om du vill ha en
           skarp fade i Stockholm eller bara få skägget i form är du välkommen in. Se våra{" "}
           <Link href="/tjanster" className="text-accent underline underline-offset-4">

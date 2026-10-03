@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { OpeningHoursTable } from "@/components/OpeningHoursTable";
+import { getOpeningHours } from "@/lib/hours";
+import { getShopSettings } from "@/lib/shop-settings";
 import { siteConfig } from "@/lib/site";
 import type { Metadata } from "next";
 
@@ -9,9 +11,11 @@ export const metadata: Metadata = {
   alternates: { canonical: "/kontakt" },
 };
 
-export default function KontaktPage() {
-  const { address, phone, phoneHref } = siteConfig;
-  const query = encodeURIComponent(`${address.street}, ${address.city}`);
+export const revalidate = 300;
+
+export default async function KontaktPage() {
+  const [shop, hours] = await Promise.all([getShopSettings(), getOpeningHours()]);
+  const query = encodeURIComponent(`${shop.addressLine}, ${shop.city}`);
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
@@ -22,11 +26,12 @@ export default function KontaktPage() {
           <div>
             <h2 className="font-semibold">Adress</h2>
             <address className="mt-2 not-italic text-foreground/70">
-              {siteConfig.name}
+              {shop.shopName}
               <br />
-              {address.street}
+              {shop.addressLine}
               <br />
-              {address.area}, {address.city}
+              {siteConfig.address.area}, {shop.postalCode ? `${shop.postalCode} ` : ""}
+              {shop.city}
             </address>
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${query}`}
@@ -40,17 +45,31 @@ export default function KontaktPage() {
 
           <div>
             <h2 className="font-semibold">Telefon</h2>
-            <a href={phoneHref} className="mt-2 inline-block text-lg text-accent hover:underline">
-              {phone}
+            <a href={shop.phoneHref} className="mt-2 inline-block text-lg text-accent hover:underline">
+              {shop.phone}
             </a>
+            {shop.email && (
+              <p className="mt-1">
+                <a href={`mailto:${shop.email}`} className="text-accent hover:underline">
+                  {shop.email}
+                </a>
+              </p>
+            )}
           </div>
 
           <div>
             <h2 className="font-semibold">Öppettider</h2>
             <div className="mt-2">
-              <OpeningHoursTable />
+              <OpeningHoursTable hours={hours} />
             </div>
           </div>
+
+          {shop.cancellationPolicy && (
+            <div>
+              <h2 className="font-semibold">Avbokning</h2>
+              <p className="mt-2 whitespace-pre-line text-foreground/70">{shop.cancellationPolicy}</p>
+            </div>
+          )}
 
           <Link
             href="/boka"
@@ -62,7 +81,7 @@ export default function KontaktPage() {
 
         <div className="aspect-square overflow-hidden rounded-xl border border-white/10 md:aspect-auto md:min-h-[420px]">
           <iframe
-            title={`Karta över ${siteConfig.name}, ${address.street}`}
+            title={`Karta över ${shop.shopName}, ${shop.addressLine}`}
             src={`https://www.google.com/maps?q=${query}&output=embed`}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"

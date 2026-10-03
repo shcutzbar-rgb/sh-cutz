@@ -1,11 +1,12 @@
-import { openingHours, weekdayNamesSv } from "@/lib/hours";
+import { weekdayNamesSv } from "@/lib/hours";
+import type { OpeningHours } from "@/types/shop";
 
-export function OpeningHoursTable() {
+export function OpeningHoursTable({ hours }: { hours: OpeningHours[] }) {
   return (
     <table className="w-full text-sm">
       <caption className="sr-only">Öppettider</caption>
       <tbody className="divide-y divide-white/10">
-        {openingHours.map((day) => (
+        {hours.map((day) => (
           <tr key={day.weekday}>
             <th scope="row" className="py-2 pr-4 text-left font-medium">
               {weekdayNamesSv[day.weekday]}
