@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { BookingError } from "@/server/errors";
 import { isAuthorizedCron } from "@/server/cron-auth";
 import { sendDueReminders } from "@/server/reminders";
+import { anonymizeOldBookings } from "@/server/retention";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 
@@ -16,7 +17,15 @@ export async function POST(request: Request) {
   }
 
   try {
-    return NextResponse.json(await sendDueReminders(), { headers: NO_STORE });
+    const reminders = await sendDueReminders();
+    // Lagringstiden (se /integritet) verkställs i samma timjobb; fel här ska inte dölja påminnelserna.
+    let anonymized: number | null = null;
+    try {
+      anonymized = await anonymizeOldBookings();
+    } catch (err) {
+      console.error("Kunde inte anonymisera gamla bokningar:", err);
+    }
+    return NextResponse.json({ ...reminders, anonymized }, { headers: NO_STORE });
   } catch (err) {
     if (err instanceof BookingError) {
       return NextResponse.json({ error: err.message }, { status: err.status, headers: NO_STORE });

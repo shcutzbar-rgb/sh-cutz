@@ -57,7 +57,7 @@ Utan Supabase-variabler visar sajten statisk data, men bokning kräver databasen
    curl -X POST http://localhost:3000/api/cron/reminders -H "Authorization: Bearer $CRON_SECRET"
    ```
 
-   Svaret är `{ "due": n, "sent": n, "failed": n }`. Bokningar som gjorts mindre än 24 h före starten påminns inte (bekräftelsen är då färsk).
+   Svaret är `{ "due": n, "sent": n, "failed": n, "anonymized": n }`. Samma timjobb anonymiserar personuppgifter i bokningar äldre än `retentionMonths` (12) månader, så som `/integritet` lovar. Bokningar som gjorts mindre än 24 h före starten påminns inte (bekräftelsen är då färsk).
 
 ### Adminpanel
 

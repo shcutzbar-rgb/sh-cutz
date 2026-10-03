@@ -6,4 +6,6 @@ export const BOOKING_CONFIG = {
   cancelDeadlineMinutes: 120,
   /** Påminnelse skickas när starten ligger inom så här många timmar. */
   reminderLeadHours: 24,
+  /** Personuppgifter i bokningar anonymiseras så här många månader efter bokad tid. */
+  retentionMonths: 12,
 } as const;
