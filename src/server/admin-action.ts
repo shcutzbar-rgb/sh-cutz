@@ -42,3 +42,8 @@ export function safeAdminPath(value: unknown, fallback: string): string {
   if (!/^\/admin(\/[A-Za-z0-9\-_/]*)?(\?[A-Za-z0-9\-_.~%=&+]*)?$/.test(value)) return fallback;
   return value.includes("//") ? fallback : value;
 }
+export function dbErrorMessage(error: { code?: string }): string {
+  if (error.code === "23503") return "Kan inte tas bort eftersom den används av bokningar. Inaktivera i stället.";
+  if (error.code === "42501") return "Du saknar behörighet för den här åtgärden.";
+  return "Kunde inte spara. Försök igen.";
+}

@@ -67,3 +67,9 @@ export function formatDateLongIn(value: Date | string, timezone: string): string
     year: "numeric",
   }).format(new Date(value));
 }
+
+/** "YYYY-MM-DDTHH:mm" (datetime-local) tolkat som lokal tid i given tidszon. */
+export function parseLocalDateTime(value: string, timezone: string): Date {
+  const [date, time] = value.split("T");
+  return zonedTime(date, time, timezone);
+}
