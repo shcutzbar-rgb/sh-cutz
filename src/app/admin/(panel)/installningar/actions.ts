@@ -24,6 +24,7 @@ export async function saveSettings(formData: FormData) {
     cancellation_policy: v.cancellationPolicy,
     latitude: v.latitude === "" ? null : Number(v.latitude),
     longitude: v.longitude === "" ? null : Number(v.longitude),
+    require_admin_mfa: v.requireAdminMfa,
   });
   if (error) fail(PATH, dbErrorMessage(error));
 

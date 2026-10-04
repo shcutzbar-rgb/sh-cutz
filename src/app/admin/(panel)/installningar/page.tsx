@@ -19,7 +19,7 @@ export default async function SettingsPage({
 
   const { data: s } = await admin.supabase
     .from("shop_settings")
-    .select("shop_name,phone,email,address_line,city,postal_code,booking_interval_minutes,cancellation_policy,latitude,longitude")
+    .select("shop_name,phone,email,address_line,city,postal_code,booking_interval_minutes,cancellation_policy,latitude,longitude,require_admin_mfa")
     .eq("id", 1)
     .maybeSingle();
   const hours = await getOpeningHours();
@@ -106,6 +106,23 @@ export default async function SettingsPage({
           <p className="mt-1 text-xs text-foreground/60">
             Kunder kan avboka själva fram till {BOOKING_CONFIG.cancelDeadlineMinutes / 60} timmar före tiden. Ändra gränsen i koden (booking-config).
           </p>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              name="requireAdminMfa"
+              defaultChecked={s?.require_admin_mfa ?? false}
+              className="mt-1 h-5 w-5 shrink-0 accent-[#d4af37]"
+            />
+            <span>
+              <span className="font-medium">Kräv tvåstegsverifiering för alla admins</span>
+              <span className="block text-xs text-foreground/60">
+                Admins utan registrerad autentiseringsapp skickas till Admin &gt; Säkerhet och får ingen åtkomst till
+                panelen förrän de har aktiverat den. Aktivera din egen först.
+              </span>
+            </span>
+          </label>
         </div>
         <div className="sm:col-span-2">
           <button type="submit" className={ui.primary}>

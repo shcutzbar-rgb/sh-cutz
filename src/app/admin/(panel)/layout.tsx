@@ -14,6 +14,7 @@ const STAFF_ITEMS: AdminNavItem[] = [
   { href: "/admin", label: "Översikt" },
   { href: "/admin/kalender", label: "Kalender" },
   { href: "/admin/bokningar", label: "Bokningar" },
+  { href: "/admin/sakerhet", label: "Säkerhet" },
 ];
 
 const OWNER_ITEMS: AdminNavItem[] = [

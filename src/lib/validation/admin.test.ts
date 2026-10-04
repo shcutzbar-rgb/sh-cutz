@@ -88,6 +88,11 @@ describe("settingsSchema", () => {
     expect(settingsSchema.safeParse({ ...ok, shopName: "" }).success).toBe(false);
   });
 
+  it("tolkar kryssrutan för MFA-plikt", () => {
+    expect(settingsSchema.parse(ok).requireAdminMfa).toBe(false);
+    expect(settingsSchema.parse({ ...ok, requireAdminMfa: "on" }).requireAdminMfa).toBe(true);
+  });
+
   it("kräver både koordinater eller ingen, inom giltigt intervall", () => {
     expect(settingsSchema.safeParse({ ...ok, latitude: "59.3145", longitude: "18.0735" }).success).toBe(true);
     expect(settingsSchema.safeParse({ ...ok, latitude: "59.3145" }).success).toBe(false);
