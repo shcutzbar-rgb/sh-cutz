@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+function subscribe(onChange: () => void) {
+  window.addEventListener("scroll", onChange, { passive: true });
+  return () => window.removeEventListener("scroll", onChange);
+}
+
+const isScrolled = () => window.scrollY > 12;
 
 /** Transparent överst på sidan, solid med oskärpa efter lite scroll. */
 export function HeaderShell({ children }: { children: React.ReactNode }) {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const scrolled = useSyncExternalStore(subscribe, isScrolled, () => false);
 
   return (
     <header

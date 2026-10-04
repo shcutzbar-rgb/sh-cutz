@@ -9,13 +9,13 @@ export function OpeningHoursTable({ hours }: { hours: OpeningHours[] }) {
   return (
     <table className="w-full text-sm">
       <caption className="sr-only">Öppettider</caption>
-      <tbody className="divide-y divide-white/10">
+      <tbody className="divide-y divide-line">
         {hours.map((day) => (
           <tr key={day.weekday}>
-            <th scope="row" className="py-2 pr-4 text-left font-medium">
+            <th scope="row" className="py-3 pr-4 text-left font-display text-base font-medium uppercase tracking-[0.1em]">
               {weekdayNamesSv[day.weekday]}
             </th>
-            <td className="py-2 text-right text-foreground/70">
+            <td className="py-3 text-right tabular-nums text-foreground/75">
               {day.opens && day.closes ? `${day.opens}–${day.closes}` : "Stängt"}
             </td>
           </tr>

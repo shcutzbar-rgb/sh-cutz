@@ -53,7 +53,7 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: -0.01em;
-    line-height: 0.98;
+    line-height: 1.06;
   }
 
   /* Liten guldetikett med linje framför */
@@ -138,6 +138,12 @@ body {
   button.card:hover {
     border-color: rgb(212 175 55 / 0.6);
     background: var(--surface-2);
+  }
+
+  /* Stor konturtext som dekor */
+  .stroke-text {
+    color: transparent;
+    -webkit-text-stroke: 1px rgb(212 175 55 / 0.22);
   }
 
   /* Tunn guldlinje som avdelare */
