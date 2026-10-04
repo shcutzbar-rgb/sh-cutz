@@ -22,9 +22,9 @@ export const dynamic = "force-dynamic";
 function Notice({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mx-auto max-w-xl px-4 py-12 sm:py-16">
-      <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-      <div className="mt-4 text-foreground/70">{children}</div>
-      <Link href="/boka" className="mt-8 inline-block rounded-full bg-accent px-8 py-3 font-semibold text-black">
+      <h1 className="display text-4xl sm:text-5xl">{title}</h1>
+      <div className="mt-4 leading-relaxed text-foreground/70">{children}</div>
+      <Link href="/boka" className="btn btn-primary mt-8">
         Boka ny tid
       </Link>
     </section>
@@ -41,10 +41,10 @@ function Summary({ booking }: { booking: BookingByToken }) {
     ["Pris", formatPrice(booking.priceSek)],
   ];
   return (
-    <dl className="mt-6 divide-y divide-white/10 rounded-xl border border-white/10 text-sm">
+    <dl className="card mt-6 divide-y divide-line text-sm">
       {rows.map(([label, value]) => (
-        <div key={label} className="flex justify-between gap-4 p-3">
-          <dt className="text-foreground/70">{label}</dt>
+        <div key={label} className="flex justify-between gap-4 p-4">
+          <dt className="text-foreground/65">{label}</dt>
           <dd className="text-right font-medium">{value}</dd>
         </div>
       ))}
@@ -78,7 +78,7 @@ export default async function AvbokaPage({ params }: { params: Promise<{ token: 
   if (state === "too_late") {
     return (
       <section className="mx-auto max-w-xl px-4 py-12 sm:py-16">
-        <h1 className="text-3xl font-bold tracking-tight">Det är för sent att avboka online</h1>
+        <h1 className="display text-4xl sm:text-5xl">Det är för sent att avboka online</h1>
         <p className="mt-4 text-foreground/70">
           Online-avbokning är möjlig senast {BOOKING_CONFIG.cancelDeadlineMinutes / 60} timmar före din tid. Ring oss på{" "}
           <a href={siteConfig.phoneHref} className="text-accent underline underline-offset-4">
@@ -93,7 +93,7 @@ export default async function AvbokaPage({ params }: { params: Promise<{ token: 
 
   return (
     <section className="mx-auto max-w-xl px-4 py-12 sm:py-16">
-      <h1 className="text-3xl font-bold tracking-tight">Avboka tid</h1>
+      <h1 className="display text-4xl sm:text-5xl">Avboka tid</h1>
       <p className="mt-2 text-foreground/70">Kontrollera att det är rätt tid och bekräfta avbokningen.</p>
       <Summary booking={booking} />
       <CancelBooking token={token} phone={siteConfig.phone} turnstileSiteKey={getTurnstileSiteKey()} />

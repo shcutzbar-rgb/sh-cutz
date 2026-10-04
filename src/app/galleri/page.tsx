@@ -1,4 +1,6 @@
 import Image from "next/image";
+import Link from "next/link";
+import { PageHeader } from "@/components/PageHeader";
 import { galleryImages } from "@/lib/gallery";
 import { pageMetadata } from "@/lib/seo";
 
@@ -11,10 +13,10 @@ export const metadata = pageMetadata({
 export default function GalleriPage() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
-      <h1 className="text-3xl font-bold tracking-tight">Galleri</h1>
-      <ul className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
+      <PageHeader eyebrow="Galleri" title="Resultatet" />
+      <ul className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
         {galleryImages.map((image, index) => (
-          <li key={image.id} className="overflow-hidden rounded-xl bg-white/5">
+          <li key={image.id} className="reveal overflow-hidden rounded-sm border border-line bg-surface">
             <Image
               src={image.src}
               alt={image.alt}
@@ -22,11 +24,14 @@ export default function GalleriPage() {
               height={image.height}
               sizes="(min-width: 768px) 33vw, 50vw"
               loading={index < 2 ? "eager" : "lazy"}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
             />
           </li>
         ))}
       </ul>
+      <Link href="/boka" className="btn btn-primary mt-12">
+        Boka tid
+      </Link>
     </section>
   );
 }

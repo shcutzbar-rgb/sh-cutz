@@ -1,4 +1,5 @@
 import { BOOKING_CONFIG } from "@/lib/booking-config";
+import { PageHeader } from "@/components/PageHeader";
 import { pageMetadata } from "@/lib/seo";
 import { getShopSettings } from "@/lib/shop-settings";
 
@@ -13,12 +14,12 @@ export const revalidate = 300;
 // UTKAST: ska granskas juridiskt av verksamheten före launch.
 export default async function IntegritetPage() {
   const shop = await getShopSettings();
-  const h2 = "mt-8 text-xl font-semibold";
-  const p = "mt-2 text-foreground/70";
+  const h2 = "display mt-12 text-2xl";
+  const p = "mt-3 leading-relaxed text-foreground/70";
 
   return (
     <section className="mx-auto max-w-2xl px-4 py-12 sm:py-16">
-      <h1 className="text-3xl font-bold tracking-tight">Integritetspolicy</h1>
+      <PageHeader eyebrow="Personuppgifter" title="Integritetspolicy" />
 
       <h2 className={h2}>Personuppgiftsansvarig</h2>
       <p className={p}>

@@ -51,11 +51,11 @@ export function CancelBooking({
   if (status === "done") {
     return (
       <div className="mt-8">
-        <h2 ref={headingRef} tabIndex={-1} className="text-2xl font-bold outline-none">
+        <h2 ref={headingRef} tabIndex={-1} className="display text-3xl outline-none">
           Din tid är avbokad
         </h2>
-        <p className="mt-2 text-foreground/70">Tack för beskedet. Du är välkommen att boka en ny tid.</p>
-        <Link href="/boka" className="mt-6 inline-block rounded-full bg-accent px-8 py-3 font-semibold text-black">
+        <p className="mt-3 text-foreground/70">Tack för beskedet. Du är välkommen att boka en ny tid.</p>
+        <Link href="/boka" className="btn btn-primary mt-8">
           Boka ny tid
         </Link>
       </div>
@@ -74,7 +74,7 @@ export function CancelBooking({
         type="button"
         onClick={cancel}
         disabled={status === "loading" || (Boolean(turnstileSiteKey) && !captchaToken)}
-        className="rounded-full bg-accent px-8 py-3 font-semibold text-black hover:bg-accent/90 disabled:opacity-50"
+        className="btn btn-primary"
       >
         {status === "loading" ? "Avbokar..." : "Bekräfta avbokning"}
       </button>
