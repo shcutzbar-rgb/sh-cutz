@@ -7,16 +7,16 @@ const minutesBefore = (m: number) => new Date(start.getTime() - m * 60_000);
 
 describe("evaluateCancellation", () => {
   it("tillåter avbokning före gränsen", () => {
-    expect(evaluateCancellation("confirmed", start, minutesBefore(121))).toBe("ok");
+    expect(evaluateCancellation("confirmed", start, minutesBefore(181))).toBe("ok");
     expect(evaluateCancellation("pending", start, minutesBefore(24 * 60))).toBe("ok");
   });
 
-  it("tillåter avbokning exakt på gränsen (2 h)", () => {
-    expect(evaluateCancellation("confirmed", start, minutesBefore(120))).toBe("ok");
+  it("tillåter avbokning exakt på gränsen (3 h)", () => {
+    expect(evaluateCancellation("confirmed", start, minutesBefore(180))).toBe("ok");
   });
 
   it("nekar inom gränsen", () => {
-    expect(evaluateCancellation("confirmed", start, minutesBefore(119))).toBe("too_late");
+    expect(evaluateCancellation("confirmed", start, minutesBefore(179))).toBe("too_late");
     expect(evaluateCancellation("confirmed", start, minutesBefore(1))).toBe("too_late");
   });
 
@@ -29,7 +29,7 @@ describe("evaluateCancellation", () => {
   });
 
   it("respekterar anpassad gräns", () => {
-    expect(evaluateCancellation("confirmed", start, minutesBefore(200), 240)).toBe("too_late");
+    expect(evaluateCancellation("confirmed", start, minutesBefore(250), 300)).toBe("too_late");
   });
 });
 

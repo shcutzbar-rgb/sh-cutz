@@ -1,30 +1,30 @@
-import { Resend } from "resend";
+import { BrevoClient } from "@getbrevo/brevo";
 import type { RenderedEmail } from "@/emails/shared";
 
-/** Skickar e-post via Resend. Kastar aldrig: returnerar false vid fel eller saknad konfiguration. */
+/** Skickar transaktionsmejl via Brevo. Returnerar false vid fel så att bokningen inte påverkas. */
 export async function sendEmail(to: string, mail: RenderedEmail): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
-  if (!apiKey || !from) {
-    console.warn("E-post hoppades över: RESEND_API_KEY eller EMAIL_FROM saknas.");
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL;
+  if (!apiKey || !senderEmail) {
+    console.warn("E-post hoppades över: BREVO_API_KEY eller BREVO_SENDER_EMAIL saknas.");
     return false;
   }
 
+  const senderName = process.env.BREVO_SENDER_NAME || "SH-Cutz";
   try {
-    const { error } = await new Resend(apiKey).emails.send({
-      from,
-      to,
+    const result = await new BrevoClient({ apiKey }).transactionalEmails.sendTransacEmail({
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: to }],
       subject: mail.subject,
-      text: mail.text,
-      html: mail.html,
+      textContent: mail.text,
+      htmlContent: mail.html,
     });
-    if (error) {
-      console.error("Resend avvisade e-post:", error.name, error.message);
-      return false;
-    }
+    console.info("Brevo accepterade transaktionsmejl", { messageId: result.messageId ?? null });
     return true;
-  } catch (err) {
-    console.error("Kunde inte skicka e-post:", err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "okänt fel";
+    const statusCode = error && typeof error === "object" && "statusCode" in error ? error.statusCode : undefined;
+    console.error("Brevo kunde inte skicka e-post:", { statusCode, message });
     return false;
   }
 }

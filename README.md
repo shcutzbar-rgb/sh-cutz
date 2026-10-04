@@ -20,7 +20,7 @@ Krav: Node.js 20.19+ (testat med 22) och npm.
 
    På Windows PowerShell: `Copy-Item .env.example .env.local`
 
-   Variabler: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_TIMEZONE`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`, `CRON_SECRET`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` och valfritt `SENTRY_DSN`.
+   Variabler: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_TIMEZONE`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, serverhemligheten `SUPABASE_SECRET_KEY`, `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, valfritt `BREVO_SENDER_NAME`, `CRON_SECRET`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` och valfritt `SENTRY_DSN`.
 
 3. Starta utvecklingsservern:
 
@@ -34,14 +34,15 @@ Krav: Node.js 20.19+ (testat med 22) och npm.
 
 Utan Supabase-variabler visar sajten statisk data, men bokning kräver databasen.
 
-1. Skapa ett Supabase-projekt och fyll i `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` och `SUPABASE_SERVICE_ROLE_KEY` i `.env.local` (och `.dev.vars`).
+1. Skapa ett Supabase-projekt och fyll i `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` och `SUPABASE_SECRET_KEY` i `.env.local` (och `.dev.vars`). Publishable key är avsedd för klienten och skyddas av RLS; secret key används endast på servern och kringgår RLS.
 2. Kör filerna i `supabase/migrations/` i ordning, antingen i Supabase SQL Editor eller med Supabase CLI (`supabase link` och `supabase db push`). De skapar tabeller, RLS-policies och seed för tjänster, frisör och arbetstider. Migrationen `20261004100000_daily_hours_10_20.sql` sätter befintliga aktiva frisörer till 10:00-20:00 alla dagar.
 3. Starta om `npm run dev`. `/boka` läser nu lediga tider från databasen.
 
 ### E-post och påminnelser
 
-- Bokningsbekräftelse och avbokningsbekräftelse skickas via [Resend](https://resend.com) när kunden angett e-post. Fyll i `RESEND_API_KEY` och `EMAIL_FROM` (verifierad domän). Utan dem hoppas e-post över och bokningen påverkas inte.
-- Avbokning sker via länken `/avboka/<token>` senast 2 timmar före tiden (`cancelDeadlineMinutes` i `src/lib/booking-config.ts`).
+- Transaktionsmejl skickas via Brevo när kunden angett e-post: bokningsbekräftelse med avbokningslänk, avbokningsbesked, mejl när admin flyttar tiden samt påminnelse. Mallarna innehåller tjänst, frisör, datum, klockslag, pris och adress från Admin > Inställningar. Fyll i `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` och valfritt `BREVO_SENDER_NAME` i `.env.local`; avsändaren måste vara verifierad i Brevo. Saknat/felande mejl påverkar inte själva bokningen.
+- Skicka ett separat testmejl bara till din egen adress: `npm run email:test -- --to din-adress@example.com`. Kommandot skickar ett riktigt testmejl via Brevo men skapar ingen bokning. API-nyckeln skrivs aldrig ut.
+- Avbokning sker via länken `/avboka/<token>` senast 3 timmar före tiden (`cancelDeadlineMinutes` i `src/lib/booking-config.ts`).
 - Påminnelser (ca 24 h före) skickas av `POST /api/cron/reminders`, som kräver headern `Authorization: Bearer <CRON_SECRET>`.
 
 **Schemaläggning med Cloudflare Cron Trigger**
@@ -49,7 +50,7 @@ Utan Supabase-variabler visar sajten statisk data, men bokning kräver databasen
 `wrangler.jsonc` pekar på `worker.ts` (som återanvänder OpenNext-workern) och har `"triggers": { "crons": ["0 * * * *"] }`, alltså en körning varje hel timme (UTC). `scheduled()` i `worker.ts` anropar endpointen internt med hemligheten.
 
 1. Generera en hemlighet, t.ex. `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
-2. Sätt den i produktion: `npx wrangler secret put CRON_SECRET` (och även `RESEND_API_KEY`, `EMAIL_FROM`, `SUPABASE_SERVICE_ROLE_KEY`).
+2. Sätt den i produktion: `npx wrangler secret put CRON_SECRET` (och även `BREVO_API_KEY`, `SUPABASE_SECRET_KEY`). Sätt `BREVO_SENDER_EMAIL` och `BREVO_SENDER_NAME` som Worker-vars i Cloudflare.
 3. Deploya med `npm run deploy`. Triggern syns under Workers > sh-cutz > Settings > Triggers.
 4. Testa lokalt med körande `npm run dev`:
 
@@ -148,13 +149,13 @@ src/components/     UI-komponenter
 src/lib/            Sajtkonfig, Supabase-klienter, validering
 src/server/         Serverlogik (actions/services)
 src/types/          Delade typer
-src/emails/         E-postmallar (Resend)
+src/emails/         E-postmallar (Brevo)
 supabase/migrations/ SQL-migreringar
 ```
 
 ## Driftsättning (Cloudflare)
 
-Förutsättningar: Cloudflare-konto, domänen i Cloudflare (för enklast DNS), Supabase-, Resend- och (valfritt) Sentry-konto, samt `npx wrangler login`.
+Förutsättningar: Cloudflare-konto, domänen i Cloudflare (för enklast DNS), Supabase-, Brevo- och (valfritt) Sentry-konto, samt `npx wrangler login`.
 
 ### 1. Supabase-projekt
 
@@ -172,20 +173,20 @@ Förutsättningar: Cloudflare-konto, domänen i Cloudflare (för enklast DNS), S
 | --- | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | bygge | skal eller `.env.production.local` | ja (sitemap, canonical, OG) |
 | `NEXT_PUBLIC_TIMEZONE` | bygge | som ovan | nej (standard `Europe/Stockholm`) |
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | bygge | som ovan | ja |
-| `SUPABASE_SERVICE_ROLE_KEY` | körning | `wrangler secret put` | ja |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | bygge | som ovan | ja |
+| `SUPABASE_SECRET_KEY` | körning | `wrangler secret put SUPABASE_SECRET_KEY` | ja |
 | `CRON_SECRET` | körning | `wrangler secret put` | ja (påminnelser, lagringstid) |
-| `RESEND_API_KEY`, `EMAIL_FROM` | körning | `wrangler secret put` | ja (mejl) |
+| `BREVO_API_KEY` | körning | `wrangler secret put BREVO_API_KEY` | ja (mejl) |
+| `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME` | körning | Worker vars i Cloudflare | ja (mejl) |
 | `TURNSTILE_SECRET_KEY` | körning | `wrangler secret put` | ja (annars blockeras bokning, avbokning och login) |
 | `TURNSTILE_SITE_KEY` | körning | `vars` i `wrangler.jsonc` eller dashboard | ja |
 | `SENTRY_DSN`, `SENTRY_ENVIRONMENT` | körning | `wrangler secret put` / `vars` | nej, men rekommenderas |
 
 ```bash
 # bygg-variabler: lägg i .env.production.local (ignoreras av git) eller exportera i skalet
-npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+npx wrangler secret put SUPABASE_SECRET_KEY
 npx wrangler secret put CRON_SECRET
-npx wrangler secret put RESEND_API_KEY
-npx wrangler secret put EMAIL_FROM
+npx wrangler secret put BREVO_API_KEY
 npx wrangler secret put TURNSTILE_SECRET_KEY
 npx wrangler secret put SENTRY_DSN
 ```
@@ -206,7 +207,7 @@ Det bygger med OpenNext och deployar workern `sh-cutz` med cron-triggern (`0 * *
 2. Skapa en Redirect Rule `www` till apex (eller tvärtom) så att bara en adress indexeras. Canonical-länkarna följer `NEXT_PUBLIC_SITE_URL`.
 3. SSL/TLS > Edge Certificates: slå på **Always Use HTTPS** och **HSTS** (börja med kort max-age).
 4. Turnstile: lägg domänen under Hostname Management för widgeten.
-5. Resend: verifiera avsändardomänen (SPF, DKIM och helst DMARC som DNS-poster) och använd en adress på den domänen i `EMAIL_FROM`.
+5. Brevo: verifiera avsändaradressen/domänen i Brevo och använd samma adress i `BREVO_SENDER_EMAIL`. För leveransbarhet rekommenderas domänautentisering med SPF/DKIM; Gmail-adresser kan ha begränsningar för produktionsutskick.
 6. Supabase: uppdatera Site URL (se steg 1).
 
 ### 5. Verifiera efter deploy
@@ -237,7 +238,7 @@ pg_dump "$DATABASE_URL" --format=custom --schema=public --data-only --exclude-ta
 Återställningstest (gör det före launch och sedan med jämna mellanrum):
 
 1. Skapa ett tillfälligt Supabase-projekt.
-2. Kör migreringarna `...schema.sql`, `...rls.sql`, `...admin_roles.sql`, `...shop_geo.sql`, `...admin_mfa_setting.sql`, `...launch_confirmation.sql`, `...drop_in_text.sql`, `...staff_barber.sql` och `...daily_hours_10_20.sql` (inte `...seed.sql`, den skulle ge dubbletter i `working_hours`).
+2. Kör migreringarna `...schema.sql`, `...rls.sql`, `...admin_roles.sql`, `...shop_geo.sql`, `...admin_mfa_setting.sql`, `...launch_confirmation.sql`, `...drop_in_text.sql`, `...staff_barber.sql`, `...daily_hours_10_20.sql` och `...booking_slot_holds.sql` (inte `...seed.sql`, den skulle ge dubbletter i `working_hours`).
 3. Återställ: `pg_restore --data-only --disable-triggers --no-owner -d "$TEST_DATABASE_URL" sh-cutz-data.dump`.
 4. Jämför antal rader: `select count(*) from bookings;` (samt `services`, `barbers`, `working_hours`, `shop_settings`) mot produktionsprojektet.
 5. Kontrollera att en bokning ser rätt ut och att exclusion constrainten finns kvar (`\d bookings`).
@@ -267,7 +268,7 @@ Status mot checklistan i [PLAN.md](PLAN.md) (avsnitt 19). **Klart** = verifierat
 | 1 | Exakta öppettider per veckodag? | Admin > Frisörer > Arbetstider (öppettider härleds). |
 | 2 | Helgdagar/röda dagar: öppet eller stängt? | Lägg in som frånvaro per frisör och dag (Admin > Frisörer). Ingen automatisk helgdagslogik finns. |
 | 3 | Hur långt i förväg får man boka? | `maxDaysAhead` (nu 30) i `src/lib/booking-config.ts`. |
-| 4 | Hur sent får man avboka? | `cancelDeadlineMinutes` (nu 120) i `booking-config.ts` och policytext i Admin > Inställningar. |
+| 4 | Hur sent får man avboka? | `cancelDeadlineMinutes` (nu 180, alltså 3 timmar) i `booking-config.ts` och policytext i Admin > Inställningar. |
 | 5 | Ska drop-in kommuniceras? | Byggt: fri text under Admin > Inställningar visas på startsida och kontakt när den är ifylld. Beslut om innehåll kvarstår. |
 | 6 | Svenska + engelska? | Inte byggt (V2). Sajten är bara på svenska. |
 | 7 | Ska flera frisörer logga in separat? | Byggt: koppla `staff` till en frisör med SQL (se Adminpanel). Kopplade användare ser bara sin frisörs bokningar. Flertalet verksamheter behöver inte mer, men kopplingen saknar UI. |
@@ -282,7 +283,7 @@ Status mot checklistan i [PLAN.md](PLAN.md) (avsnitt 19). **Klart** = verifierat
 3. Domän, DNS, HTTPS och `NEXT_PUBLIC_SITE_URL` satt vid bygge (annars pekar sitemap och canonical på fel adress).
 4. Produktions-Supabase med migreringar, första admin och avstängd registrering.
 5. Turnstile-nycklar (utan dem blockeras bokning, avbokning och admininloggning i produktion).
-6. Verifierad avsändardomän i Resend och `EMAIL_FROM`.
+6. Verifierad avsändare i Brevo och `BREVO_API_KEY`/`BREVO_SENDER_EMAIL` satta i Cloudflare.
 7. Juridisk granskning av `/integritet`.
 8. Genomförd och godkänd backup-återställning samt testbokning/-avbokning.
 9. 2FA aktiverad för varje admin (och kravet påslaget), inklusive ett testat inloggningsflöde mot produktions-Supabase.

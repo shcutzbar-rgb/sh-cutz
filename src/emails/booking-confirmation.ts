@@ -1,28 +1,33 @@
 import { siteConfig } from "@/lib/site";
-import { cancelDeadlineHours, detailsHtml, detailsText, escapeHtml, footerText, layoutHtml, type EmailBooking, type RenderedEmail } from "./shared";
+import { cancelDeadlineHours } from "./shared";
+import { detailsHtml, detailsText, escapeHtml, footerText, layoutHtml, type EmailBooking, type RenderedEmail } from "./shared";
 
 export function renderBookingConfirmation(booking: EmailBooking, cancelUrl: string): RenderedEmail {
-  const policy = `Du kan avboka fram till ${cancelDeadlineHours} timmar före din tid via länken nedan. Därefter, ring ${siteConfig.phone}.`;
+  const shopName = booking.shopName || siteConfig.name;
+  const phone = booking.shopPhone || siteConfig.phone;
+  const cancellationText = `Du kan avboka fram till ${cancelDeadlineHours} timmar före din tid. Efter det, ring ${phone}.`;
 
   const text = `Hej ${booking.customerName}!
 
-Din tid hos ${siteConfig.name} är bokad.
+Din tid hos ${shopName} är bokad.
 
 ${detailsText(booking)}
 
-${policy}
-Avboka: ${cancelUrl}
+${cancellationText}
+Avboka din tid: ${cancelUrl}
 
-${footerText()}`;
+${footerText(booking)}`;
 
   const html = layoutHtml(
     "Din tid är bokad",
     `<p>Hej ${escapeHtml(booking.customerName)}!</p>
-<p>Din tid hos ${escapeHtml(siteConfig.name)} är bokad.</p>
+<p>Din tid hos ${escapeHtml(shopName)} är bokad.</p>
 ${detailsHtml(booking)}
-<p>${escapeHtml(policy)}</p>
-<p><a href="${escapeHtml(cancelUrl)}" style="display:inline-block;padding:10px 18px;background:#171717;color:#ffffff;text-decoration:none;border-radius:6px">Avboka tid</a></p>`,
+<p>${escapeHtml(cancellationText)}</p>
+<p><a href="${escapeHtml(cancelUrl)}" style="display:inline-block;padding:12px 20px;background:#252b24;color:#ffffff;text-decoration:none;border-radius:4px;font-weight:600">Avboka tid</a></p>
+<p style="font-size:12px;color:#666">Fungerar inte knappen? Öppna länken:<br><a href="${escapeHtml(cancelUrl)}">${escapeHtml(cancelUrl)}</a></p>`,
+    booking,
   );
 
-  return { subject: `Bokningsbekräftelse – ${siteConfig.name}`, text, html };
+  return { subject: `Bokningsbekräftelse – ${shopName}`, text, html };
 }

@@ -3,7 +3,7 @@ export const BOOKING_CONFIG = {
   minNoticeMinutes: 120,
   maxDaysAhead: 30,
   /** Senaste tid före starten som kunden själv får avboka online. */
-  cancelDeadlineMinutes: 120,
+  cancelDeadlineMinutes: 180,
   /** Påminnelse skickas när starten ligger inom så här många timmar. */
   reminderLeadHours: 24,
   /** Personuppgifter i bokningar anonymiseras så här många månader efter bokad tid. */

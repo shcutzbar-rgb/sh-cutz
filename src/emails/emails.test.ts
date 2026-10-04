@@ -29,6 +29,14 @@ describe("e-postmallar", () => {
     expect(mail.subject).toMatch(/bekräftelse/i);
   });
 
+  it("bekräftelsen visar avbokningsknapp och tre timmars avbokningsgräns", () => {
+    const mail = renderBookingConfirmation(booking, cancelUrl);
+    expect(mail.html).toContain(">Avboka tid</a>");
+    expect(mail.html).toContain("3 timmar före din tid");
+    expect(mail.text).toContain("3 timmar före din tid");
+    expect(mail.text).toContain(`Avboka din tid: ${cancelUrl}`);
+  });
+
   it("påminnelsen och avbokningsmailet saknar avbokningslänk men har detaljer", () => {
     for (const mail of [renderBookingReminder(booking), renderBookingCancelled(booking)]) {
       expect(mail.text).toContain("10:00–10:30");
@@ -59,6 +67,26 @@ describe("e-postmallar", () => {
     expect(mail.html).not.toContain("<i>A</i>");
     expect(mail.html).not.toContain("<b>Ali</b>");
     expect(mail.html).toContain("&lt;b&gt;Ali&lt;/b&gt;");
+  });
+
+  it("visar verksamhetens inställda namn, adress och telefon i text och HTML", () => {
+    const shopBooking = {
+      ...booking,
+      shopName: "SH-Cutz Söder",
+      shopAddress: "Folkungagatan 87, 116 22 Stockholm",
+      shopPhone: "070-111 22 33",
+    };
+    for (const mail of [
+      renderBookingConfirmation(shopBooking, cancelUrl),
+      renderBookingCancelled(shopBooking),
+      renderBookingMoved(shopBooking, { startAt: booking.startAt, endAt: booking.endAt, barberName: "Ali" }),
+    ]) {
+      for (const body of [mail.text, mail.html]) {
+        expect(body).toContain("SH-Cutz Söder");
+        expect(body).toContain("Folkungagatan 87, 116 22 Stockholm");
+        expect(body).toContain("070-111 22 33");
+      }
+    }
   });
 
   it("escapar kundinmatning i HTML men inte i text", () => {

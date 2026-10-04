@@ -255,13 +255,13 @@ describe("avbokning", () => {
     expect((await rows())[0].status).toBe("confirmed");
   });
 
-  it("nekar avbokning inom 2 timmar före tiden", async () => {
+  it("nekar avbokning inom 3 timmar före tiden", async () => {
     const { cancelToken } = await createBooking(input(at("08:00")), NOW);
-    const late = new Date(at("06:30")); // 1,5 h före
+    const late = new Date(at("05:30")); // 2,5 h före
     expect(await cancelBookingByToken(cancelToken, late)).toEqual({ ok: false, reason: "too_late" });
     expect((await rows())[0].status).toBe("confirmed");
 
-    const ok = new Date(at("06:00")); // exakt 2 h före
+    const ok = new Date(at("05:00")); // exakt 3 h före
     expect(await cancelBookingByToken(cancelToken, ok)).toMatchObject({ ok: true });
   });
 
