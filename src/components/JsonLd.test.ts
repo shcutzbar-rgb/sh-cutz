@@ -4,11 +4,9 @@ import { deriveOpeningHours } from "@/lib/hours";
 import { staticServices } from "@/lib/services";
 import { staticShopSettings, type ShopSettings } from "@/lib/shop-settings";
 
-// Testdata, inte kundens öppettider.
-const sampleHours = deriveOpeningHours([
-  ...[1, 2, 3, 4, 5].map((weekday) => ({ weekday, start_time: "10:00:00", end_time: "19:00:00" })),
-  { weekday: 6, start_time: "10:00:00", end_time: "17:00:00" },
-]);
+const sampleHours = deriveOpeningHours(
+  Array.from({ length: 7 }, (_, weekday) => ({ weekday, start_time: "10:00:00", end_time: "20:00:00" })),
+);
 
 const build = (shop: Partial<ShopSettings> = {}, hours = sampleHours) =>
   buildHairSalonJsonLd(staticServices, hours, { ...staticShopSettings, ...shop }) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -22,8 +20,8 @@ describe("buildHairSalonJsonLd", () => {
     const ld = build();
     expect(ld["@type"]).toBe("HairSalon");
     expect(ld.priceRange).toBe("180-400 SEK");
-    expect(ld.openingHoursSpecification).toHaveLength(6);
-    expect(ld.openingHoursSpecification[0]).toMatchObject({ dayOfWeek: "Monday", opens: "10:00", closes: "19:00" });
+    expect(ld.openingHoursSpecification).toHaveLength(7);
+    expect(ld.openingHoursSpecification[0]).toMatchObject({ dayOfWeek: "Monday", opens: "10:00", closes: "20:00" });
   });
 
   it("utelämnar postnummer, geo och e-post när de saknas", () => {

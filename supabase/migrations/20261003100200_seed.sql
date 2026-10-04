@@ -14,8 +14,7 @@ insert into barbers (id, name, bio) values
   ('00000000-0000-4000-8000-0000000000b1', 'Shabir', 'Barberare på SH-Cutz på Södermalm. Specialiserad på fades och skäggtrimning.')
 on conflict (id) do nothing;
 
--- UTKAST: samma öppettider som i src/lib/hours.ts. Verifiera med kunden före launch.
+-- Standardöppettider enligt verksamhetens instruktion: alla dagar 10:00-20:00.
 insert into working_hours (barber_id, weekday, start_time, end_time)
-select '00000000-0000-4000-8000-0000000000b1', d, '10:00', '19:00' from generate_series(1, 5) as d;
-insert into working_hours (barber_id, weekday, start_time, end_time)
-values ('00000000-0000-4000-8000-0000000000b1', 6, '10:00', '17:00');
+select '00000000-0000-4000-8000-0000000000b1', weekday, '10:00', '20:00'
+from generate_series(0, 6) as weekdays(weekday);

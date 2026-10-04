@@ -35,7 +35,7 @@ Krav: Node.js 20.19+ (testat med 22) och npm.
 Utan Supabase-variabler visar sajten statisk data, men bokning kräver databasen.
 
 1. Skapa ett Supabase-projekt och fyll i `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` och `SUPABASE_SERVICE_ROLE_KEY` i `.env.local` (och `.dev.vars`).
-2. Kör filerna i `supabase/migrations/` i ordning, antingen i Supabase SQL Editor eller med Supabase CLI (`supabase link` och `supabase db push`). De skapar tabeller, RLS-policies och seed för tjänster, frisör och arbetstider.
+2. Kör filerna i `supabase/migrations/` i ordning, antingen i Supabase SQL Editor eller med Supabase CLI (`supabase link` och `supabase db push`). De skapar tabeller, RLS-policies och seed för tjänster, frisör och arbetstider. Migrationen `20261004100000_daily_hours_10_20.sql` sätter befintliga aktiva frisörer till 10:00-20:00 alla dagar.
 3. Starta om `npm run dev`. `/boka` läser nu lediga tider från databasen.
 
 ### E-post och påminnelser
@@ -162,7 +162,7 @@ Förutsättningar: Cloudflare-konto, domänen i Cloudflare (för enklast DNS), S
 2. Kör filerna i `supabase/migrations/` i filnamnsordning (SQL Editor eller `supabase db push`).
 3. Authentication > Sign In / Providers: **stäng av öppen registrering** ("Allow new users to sign up"). Sätt Site URL till produktionsadressen.
 4. Skapa första admin enligt avsnittet [Adminpanel](#adminpanel) och logga in på `/admin/login`.
-5. Fyll i riktiga uppgifter under Admin > Inställningar (telefon, adress, postnummer, e-post, koordinater, avbokningspolicy) och Admin > Frisörer (arbetstider). Seed-datan innehåller utkast på öppettider.
+5. Fyll i riktiga uppgifter under Admin > Inställningar (telefon, adress, postnummer, e-post, koordinater, avbokningspolicy) och bekräfta öppettiderna under Inställningar. Standardtiderna är 10:00-20:00 alla dagar; ändra dem under Admin > Frisörer om verksamhetens öppettider skiljer sig.
 
 ### 2. Variabler och hemligheter
 
@@ -237,7 +237,7 @@ pg_dump "$DATABASE_URL" --format=custom --schema=public --data-only --exclude-ta
 Återställningstest (gör det före launch och sedan med jämna mellanrum):
 
 1. Skapa ett tillfälligt Supabase-projekt.
-2. Kör migreringarna `...schema.sql`, `...rls.sql`, `...admin_roles.sql`, `...shop_geo.sql`, `...admin_mfa_setting.sql`, `...launch_confirmation.sql`, `...drop_in_text.sql` och `...staff_barber.sql` (inte `...seed.sql`, den skulle ge dubbletter i `working_hours`).
+2. Kör migreringarna `...schema.sql`, `...rls.sql`, `...admin_roles.sql`, `...shop_geo.sql`, `...admin_mfa_setting.sql`, `...launch_confirmation.sql`, `...drop_in_text.sql`, `...staff_barber.sql` och `...daily_hours_10_20.sql` (inte `...seed.sql`, den skulle ge dubbletter i `working_hours`).
 3. Återställ: `pg_restore --data-only --disable-triggers --no-owner -d "$TEST_DATABASE_URL" sh-cutz-data.dump`.
 4. Jämför antal rader: `select count(*) from bookings;` (samt `services`, `barbers`, `working_hours`, `shop_settings`) mot produktionsprojektet.
 5. Kontrollera att en bokning ser rätt ut och att exclusion constrainten finns kvar (`\d bookings`).
@@ -250,7 +250,7 @@ Status mot checklistan i [PLAN.md](PLAN.md) (avsnitt 19). **Klart** = verifierat
 | Punkt | Status | Kommentar |
 | --- | --- | --- |
 | Verifierade kontaktuppgifter | Manuellt, med spärr | Adress och telefon är utkast i `src/lib/site.ts` och seed. Fyll i riktiga uppgifter (inkl. postnummer och koordinater) under Admin > Inställningar och kryssa i bekräftelsen. `npm run deploy` stoppar och `check:live` larmar tills det är gjort. |
-| Öppettider | Manuellt, med spärr | Seed är påhittade utkast (mån–fre 10–19, lör 10–17). Det finns ingen statisk fallback längre: utan arbetstider i databasen visar sajten ingen öppettidstabell. Sätt riktiga arbetstider under Admin > Frisörer och bekräfta dem under Inställningar. Obs: bekräftelsen är en mänsklig kontroll, spärren kan inte veta att tiderna är sanna. |
+| Öppettider | Inställt på begäran, bekräftelse manuell | Migrationen sätter 10:00-20:00 alla dagar för aktiva frisörer. Ändra under Admin > Frisörer om tiderna ska skilja sig och bekräfta under Inställningar. Utan arbetstider i databasen visas ingen öppettidstabell. Bekräftelsen är en mänsklig kontroll. |
 | Domän + HTTPS + korrekt DNS | Manuellt | Se avsnitt 4. Kontrolleras av `check:live`. |
 | SEO metadata + sitemap live | Klart i kod | Sitemap, robots, canonical, Open Graph/Twitter, OG-bild och JSON-LD finns. Kräver `NEXT_PUBLIC_SITE_URL` vid bygge. Lighthouse (mobil): Performance 96–98, Accessibility 100, Best Practices 100, SEO 100. |
 | Policy-sidor publicerade | Klart i kod, juridik manuellt | `/integritet` finns och är länkad i footern och i bokningsflödet. Texten är ett utkast: låt verksamheten granska den (organisationsnummer, lagringstid 12 månader). |

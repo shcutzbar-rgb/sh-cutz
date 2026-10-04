@@ -30,7 +30,7 @@ import { hashToken } from "./tokens";
 
 // Hela flödet mot riktiga migreringar i PGlite (Postgres), med riktiga constraints.
 const SERVICE = "00000000-0000-4000-8000-000000000001"; // Fade, 30 min
-const BARBER = "00000000-0000-4000-8000-0000000000b1"; // Måndag-fredag 10-19 (seed)
+const BARBER = "00000000-0000-4000-8000-0000000000b1"; // Alla dagar 10-20
 const DATE = "2026-10-12"; // måndag, CEST (UTC+2)
 const NOW = new Date("2026-10-05T08:00:00Z");
 const at = (hhmmUtc: string) => `${DATE}T${hhmmUtc}:00.000Z`; // 10:00 CEST = 08:00Z
@@ -93,9 +93,25 @@ beforeEach(async () => {
 describe("tillgänglighet och bokning", () => {
   it("visar lediga tider inom arbetstid i 15-minuterssteg", async () => {
     const slots = await slotsAt();
-    expect(slots).toHaveLength(35); // 10:00-18:30 start för 30 min
+    expect(slots).toHaveLength(39); // 10:00-19:30 start för 30 min
     expect(slots[0]).toBe(at("08:00"));
-    expect(slots.at(-1)).toBe(at("16:30"));
+    expect(slots.at(-1)).toBe(at("17:30"));
+  });
+
+  it("har samma öppettider på helgen och släpper inte igenom tid efter stängning", async () => {
+    const sunday = await getAvailability({ serviceId: SERVICE, barberId: BARBER, date: "2026-10-11" }, NOW);
+    expect(sunday.slots).toHaveLength(39);
+    expect(sunday.slots.at(-1)?.toISOString()).toBe("2026-10-11T17:30:00.000Z");
+
+    const afterClose = await rejection(createBooking(input(at("17:45")), NOW)); // 19:45 lokal tid
+    expect(afterClose).toMatchObject({ code: "slot_unavailable", status: 409 });
+  });
+
+  it("nekar gårdagens datum både i tillgänglighet och vid bokning", async () => {
+    const afterDay = new Date("2026-10-13T08:00:00Z");
+    expect(await slotsAt(afterDay)).toEqual([]);
+    const err = await rejection(createBooking(input(at("08:00")), afterDay));
+    expect(err).toMatchObject({ code: "slot_unavailable", status: 409 });
   });
 
   it("sparar bokningen med hashad token, aldrig rå token", async () => {
