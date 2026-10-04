@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { AdminAuthError, requireAdminAction, type AdminContext, type AdminRole } from "./admin-auth";
+import { AdminAuthError, MFA_LOGIN_PATH, MFA_SETUP_PATH, requireAdminAction, type AdminContext, type AdminRole } from "./admin-auth";
 
 function withParam(path: string, key: string, value: string): string {
   return `${path}${path.includes("?") ? "&" : "?"}${key}=${encodeURIComponent(value)}`;
@@ -16,12 +16,18 @@ export function fail(path: string, message: string): never {
 }
 
 /** Första raden i varje server action: kontrollerar inloggning och roll på nytt. */
-export async function guardAction(required: AdminRole, failPath: string): Promise<AdminContext> {
+export async function guardAction(
+  required: AdminRole,
+  failPath: string,
+  options: { allowMfaEnrollment?: boolean } = {},
+): Promise<AdminContext> {
   try {
-    return await requireAdminAction(required);
+    return await requireAdminAction(required, options);
   } catch (err) {
     if (err instanceof AdminAuthError) {
       if (err.code === "unauthenticated") redirect("/admin/login");
+      if (err.code === "mfa_required") redirect(MFA_LOGIN_PATH);
+      if (err.code === "mfa_enrollment_required") redirect(MFA_SETUP_PATH);
       fail(failPath, "Du saknar behörighet för den här åtgärden.");
     }
     throw err;
