@@ -57,6 +57,11 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
   const [barber, setBarber] = useState<Barber | null>(null);
   const [date, setDate] = useState("");
   const [visibleMonth, setVisibleMonth] = useState(minDate.slice(0, 7));
+  const [
+    monthAvailability,
+    setMonthAvailability,
+  ] = useState<{ month: string; serviceId: string; barberId: string; byDate: Record<string, boolean> } | null>(null);
+  const [monthAvailabilityError, setMonthAvailabilityError] = useState<string | null>(null);
   const [slots, setSlots] = useState<string[] | null>(null);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState<string | null>(null);
@@ -75,6 +80,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
 
   const headingRef = useRef<HTMLHeadingElement>(null);
   const slotsRequest = useRef(0);
+  const monthRequest = useRef(0);
   const monthDays = useMemo(() => buildMonthGrid(visibleMonth), [visibleMonth]);
   const displayedMonth = monthFmt.format(new Date(`${visibleMonth}-01T12:00:00Z`));
   const earliestMonth = minDate.slice(0, 7);
@@ -90,6 +96,36 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
   useEffect(() => {
     headingRef.current?.focus();
   }, [step]);
+
+  useEffect(() => {
+    if (step !== "time" || !service || !barber) return;
+    const serviceId = service.id;
+    const barberId = barber.id;
+    const requestKey = `${visibleMonth}:${serviceId}:${barberId}`;
+    const requestId = ++monthRequest.current;
+
+    async function loadMonthAvailability() {
+      try {
+        const params = new URLSearchParams({ serviceId, barberId, month: visibleMonth });
+        const response = await fetch(`/api/availability/month?${params}`);
+        const data = (await response.json()) as { days?: { date: string; available: boolean }[] };
+        if (!response.ok || !data.days) throw new Error("Månadens tillgänglighet kunde inte hämtas.");
+        if (requestId === monthRequest.current) {
+          setMonthAvailability({
+            month: visibleMonth,
+            serviceId,
+            barberId,
+            byDate: Object.fromEntries(data.days.map((day) => [day.date, day.available])),
+          });
+          setMonthAvailabilityError(null);
+        }
+      } catch {
+        if (requestId === monthRequest.current) setMonthAvailabilityError(requestKey);
+      }
+    }
+
+    void loadMonthAvailability();
+  }, [step, service, barber, visibleMonth]);
 
   async function loadSlots(nextDate: string, svc: Service, brb: Barber) {
     const requestId = ++slotsRequest.current;
@@ -297,15 +333,21 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                     <div key={weekIndex} role="row" className="grid grid-cols-7 gap-1">
                       {monthDays.slice(weekIndex * 7, weekIndex * 7 + 7).map((day, dayIndex) => {
                         if (!day) return <span key={`blank-${weekIndex}-${dayIndex}`} role="gridcell" aria-hidden className="aspect-square" />;
-                        const unavailable = day < minDate || day > maxDate;
+                        const currentMonthAvailability =
+                          monthAvailability?.month === visibleMonth &&
+                          monthAvailability.serviceId === service.id &&
+                          monthAvailability.barberId === barber.id;
+                        const availability = currentMonthAvailability ? monthAvailability.byDate[day] : undefined;
+                        const unavailable = day < minDate || day > maxDate || availability === false;
                         const selected = day === date;
                         const today = day === minDate;
+                        const availabilityLabel = availability === true ? ", lediga tider" : availability === false ? ", inga lediga tider" : "";
                         return (
                           <div key={day} role="gridcell" className="aspect-square">
                             <button
                               type="button"
                               aria-pressed={selected}
-                              aria-label={`${formatDateLongIn(new Date(`${day}T12:00:00Z`), timezone)}${today ? ", idag" : ""}`}
+                              aria-label={`${formatDateLongIn(new Date(`${day}T12:00:00Z`), timezone)}${today ? ", idag" : ""}${availabilityLabel}`}
                               disabled={unavailable}
                               onClick={() => selectDate(day)}
                               className={`h-full w-full min-h-10 rounded-sm border text-sm transition-colors sm:min-h-11 ${
@@ -318,7 +360,12 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                                       : "border-transparent text-foreground/85 hover:border-accent hover:bg-accent/10"
                               }`}
                             >
-                              {Number(day.slice(8, 10))}
+                              <span className="flex h-full flex-col items-center justify-center gap-0.5">
+                                <span>{Number(day.slice(8, 10))}</span>
+                                {availability !== undefined && (
+                                  <span aria-hidden className={`h-1 w-1 rounded-full ${availability ? "bg-emerald-400" : "bg-foreground/25"}`} />
+                                )}
+                              </span>
                             </button>
                           </div>
                         );
@@ -328,6 +375,11 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                 </div>
                 <p className="mt-3 text-center text-xs text-foreground/55">
                   Välj datum från idag till {formatDateLongIn(new Date(`${maxDate}T12:00:00Z`), timezone)}.
+                </p>
+                <p className="mt-2 text-center text-xs text-foreground/65" aria-live="polite">
+                  {monthAvailabilityError === `${visibleMonth}:${service.id}:${barber.id}`
+                    ? "Tillgänglighet kunde inte hämtas. Välj en dag för att försöka igen."
+                    : "Grön markering = lediga tider. Dämpad dag = stängt eller fullbokat."}
                 </p>
               </div>
 

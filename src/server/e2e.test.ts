@@ -20,7 +20,7 @@ vi.mock("./notifications", () => ({
 }));
 
 import { moveBooking } from "./admin-bookings";
-import { getAvailability } from "./availability";
+import { getAvailability, getMonthAvailability } from "./availability";
 import { createBooking } from "./bookings";
 import { cancelBookingByToken } from "./cancellation";
 import { BookingError } from "./errors";
@@ -105,6 +105,15 @@ describe("tillgänglighet och bokning", () => {
 
     const afterClose = await rejection(createBooking(input(at("17:45")), NOW)); // 19:45 lokal tid
     expect(afterClose).toMatchObject({ code: "slot_unavailable", status: 409 });
+  });
+
+  it("markerar en hel frånvarodag som otillgänglig i månadskalendern", async () => {
+    await pg.exec(
+      `insert into time_off (barber_id, start_at, end_at, reason) values ('${BARBER}', '2026-10-06T08:00:00Z', '2026-10-06T18:00:00Z', 'Ledig')`,
+    );
+    const days = await getMonthAvailability({ serviceId: SERVICE, barberId: BARBER, month: "2026-10" }, NOW);
+    expect(days.find((day) => day.date === "2026-10-05")?.available).toBe(true);
+    expect(days.find((day) => day.date === "2026-10-06")?.available).toBe(false);
   });
 
   it("nekar gårdagens datum både i tillgänglighet och vid bokning", async () => {
