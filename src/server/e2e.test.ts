@@ -138,6 +138,14 @@ describe("tillgänglighet och bokning", () => {
     expect(new Date(row.end_at).toISOString()).toBe(at("08:30"));
   });
 
+  it("tillåter bokning utan telefon när e-post finns och lagrar telefon som null", async () => {
+    const booking = await createBooking(input(at("08:00"), { customerPhone: "" }), NOW);
+    const [row] = await rows();
+    expect(row.customer_phone).toBeNull();
+    expect(row.customer_email).toBe("anna@example.com");
+    expect(booking.id).toBe(row.id);
+  });
+
   it("tar bort överlappande tider ur tillgängligheten", async () => {
     await createBooking(input(at("09:00")), NOW); // 11:00-11:30 CEST
     const slots = await slotsAt();

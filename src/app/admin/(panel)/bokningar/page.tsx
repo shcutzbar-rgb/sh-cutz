@@ -174,10 +174,15 @@ export default async function BookingsPage({
                     {b.serviceName} hos {b.barberName} ({formatPrice(b.priceSek)})
                   </p>
                   <p className="mt-1 text-sm">
-                    {b.customerName},{" "}
-                    <a href={`tel:${b.customerPhone.replace(/[^\d+]/g, "")}`} className="text-accent underline underline-offset-2">
-                      {b.customerPhone}
-                    </a>
+                    {b.customerName}
+                    {b.customerPhone && (
+                      <>
+                        {", "}
+                        <a href={`tel:${b.customerPhone.replace(/[^\d+]/g, "")}`} className="text-accent underline underline-offset-2">
+                          {b.customerPhone}
+                        </a>
+                      </>
+                    )}
                     {b.customerEmail ? `, ${b.customerEmail}` : ""}
                   </p>
                   {b.notes && <p className="mt-1 text-sm text-foreground/70">Meddelande: {b.notes}</p>}

@@ -8,15 +8,18 @@ const valid = {
   holdToken: "00000000-0000-4000-8000-000000000099",
   customerName: "Anna Svensson",
   customerPhone: "072-192 68 49",
-  customerEmail: "",
+  customerEmail: "anna@example.com",
   notes: "",
   consent: true,
 };
 
 describe("createBookingSchema", () => {
-  it("godkänner giltig indata, e-post är valfri", () => {
+  it("kräver e-post och tillåter telefonnummer att utelämnas", () => {
     expect(createBookingSchema.safeParse(valid).success).toBe(true);
-    expect(createBookingSchema.safeParse({ ...valid, customerEmail: "anna@example.com" }).success).toBe(true);
+    expect(createBookingSchema.safeParse({ ...valid, customerPhone: "" }).success).toBe(true);
+    expect(createBookingSchema.safeParse({ ...valid, customerPhone: undefined }).success).toBe(true);
+    expect(createBookingSchema.safeParse({ ...valid, customerEmail: "" }).success).toBe(false);
+    expect(createBookingSchema.safeParse({ ...valid, customerEmail: undefined }).success).toBe(false);
   });
 
   it("kräver samtycke", () => {

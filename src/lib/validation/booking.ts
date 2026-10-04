@@ -6,17 +6,22 @@ export const customerSchema = z.object({
   customerPhone: z
     .string()
     .trim()
-    .regex(/^\+?[0-9][0-9\s-]{5,18}$/, "Ange ett giltigt telefonnummer"),
+    .max(24, "Telefonnumret är för långt")
+    .refine((value) => value === "" || /^\+?[0-9][0-9\s-]{5,18}$/.test(value), "Ange ett giltigt telefonnummer")
+    .optional()
+    .default(""),
   customerEmail: z
     .string()
     .trim()
+    .min(1, "E-post krävs för bokningsbekräftelsen")
     .max(254, "E-postadressen är för lång")
-    .refine((v) => v === "" || z.email().safeParse(v).success, "Ange en giltig e-postadress"),
+    .refine((v) => z.email().safeParse(v).success, "Ange en giltig e-postadress"),
   notes: z.string().trim().max(500, "Max 500 tecken"),
   consent: z.boolean().refine((v) => v === true, "Du måste godkänna hanteringen av dina personuppgifter"),
 });
 
 export type CustomerFormValues = z.infer<typeof customerSchema>;
+export type CustomerFormInput = z.input<typeof customerSchema>;
 
 export const createBookingSchema = customerSchema.extend({
   serviceId: z.uuid(),

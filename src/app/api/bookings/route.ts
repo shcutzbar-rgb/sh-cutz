@@ -51,10 +51,8 @@ export async function POST(request: Request) {
 
     // E-post skickas efter svaret och kan aldrig fälla bokningen.
     const { customerName, customerEmail } = parsed.data;
-    if (customerEmail) {
-      const cancelUrl = `${new URL(request.url).origin}/avboka/${booking.cancelToken}`;
-      after(() => sendConfirmationEmail({ ...booking, customerName }, customerEmail, cancelUrl));
-    }
+    const cancelUrl = `${new URL(request.url).origin}/avboka/${booking.cancelToken}`;
+    after(() => sendConfirmationEmail({ ...booking, customerName }, customerEmail, cancelUrl));
 
     return NextResponse.json({ booking }, { status: 201, headers: NO_STORE });
   } catch (err) {

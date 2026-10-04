@@ -11,7 +11,7 @@ import { buildMonthGrid, shiftMonth } from "@/lib/booking-calendar";
 import { formatDuration, formatPrice } from "@/lib/format";
 import { buildIcs } from "@/lib/ics";
 import { siteConfig } from "@/lib/site";
-import { customerSchema, type CustomerFormValues } from "@/lib/validation/booking";
+import { customerSchema, type CustomerFormInput, type CustomerFormValues } from "@/lib/validation/booking";
 import type { Barber, Service } from "@/types/shop";
 
 type Props = {
@@ -89,7 +89,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
   const earliestMonth = minDate.slice(0, 7);
   const latestMonth = maxDate.slice(0, 7);
 
-  const form = useForm<CustomerFormValues>({
+  const form = useForm<CustomerFormInput, unknown, CustomerFormValues>({
     resolver: zodResolver(customerSchema),
     defaultValues: { customerName: "", customerPhone: "", customerEmail: "", notes: "", consent: false },
   });
@@ -523,7 +523,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                   />
                 </Field>
 
-                <Field id="customerPhone" label="Telefon" error={errors.customerPhone?.message}>
+                <Field id="customerPhone" label="Telefon" optional hint="Valfritt" error={errors.customerPhone?.message}>
                   <input
                     id="customerPhone"
                     type="tel"
@@ -539,8 +539,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                 <Field
                   id="customerEmail"
                   label="E-post"
-                  optional
-                  hint="Behövs för bekräftelse och påminnelse. Utan e-post visas bokningsuppgifterna bara här."
+                  hint="Obligatorisk för bokningsbekräftelse och påminnelse."
                   error={errors.customerEmail?.message}
                 >
                   <input
@@ -548,6 +547,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                     type="email"
                     inputMode="email"
                     autoComplete="email"
+                    required
                     aria-invalid={!!errors.customerEmail}
                     aria-describedby={errors.customerEmail ? "customerEmail-error" : "customerEmail-hint"}
                     className={inputClass}

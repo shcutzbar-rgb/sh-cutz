@@ -21,7 +21,7 @@ export type AdminBooking = {
   durationMinutes: number;
   barberName: string;
   customerName: string;
-  customerPhone: string;
+  customerPhone: string | null;
   customerEmail: string | null;
   notes: string | null;
 };
