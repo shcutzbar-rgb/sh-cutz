@@ -71,7 +71,7 @@ Bokning, avbokning och admininloggning skyddas av Turnstile (utöver rate limit,
 
 Adminpanelen ligger på `/admin` och använder Supabase Auth (e-post + lösenord). Endast användare i tabellen `admin_users` släpps in.
 
-1. Skapa användaren i Supabase: Authentication > Users > Add user (bekräfta e-posten) med ett långt, unikt lösenord. **Stäng av öppen registrering** under Authentication > Sign In / Providers. Observera: adminpanelen kräver i dagsläget bara lösenord. Att aktivera MFA i Supabase skyddar inte `/admin` förrän appen även kräver andra faktorn (AAL2), vilket inte är byggt än.
+1. Skapa användaren i Supabase: Authentication > Users > Add user (bekräfta e-posten) med ett långt, unikt lösenord. **Stäng av öppen registrering** under Authentication > Sign In / Providers.
 2. Gör användaren till admin i SQL Editor (byt e-post, och `owner` mot `staff` vid behov):
 
    ```sql
@@ -87,6 +87,25 @@ Adminpanelen ligger på `/admin` och använder Supabase Auth (e-post + lösenord
 | `owner` | Allt ovan samt tjänster, frisörer (inkl. arbetstider och frånvaro) och inställningar |
 
 Behörighet kontrolleras på servern i layouten, på varje sida och i varje server action. Adminåtgärder körs med den inloggade användarens egen session, så RLS (`20261003110000_admin_roles.sql`) gäller som ett andra lager. Öppettider på sajten härleds från frisörernas arbetstider.
+
+#### Tvåstegsverifiering (TOTP)
+
+Admin skyddas av TOTP (autentiseringsapp) via Supabase MFA.
+
+1. Kontrollera att TOTP är påslaget i Supabase: Authentication > Sign In / Providers > Multi-Factor.
+2. Logga in och öppna **Säkerhet** (`/admin/sakerhet`) > *Aktivera tvåstegsverifiering*. Skanna QR-koden och bekräfta med första koden.
+3. Framöver förär inloggningen en kod på `/admin/login/mfa`. Användare med verifierad faktor får **ingen** åtkomst till `/admin` eller adminåtgärder förrän sessionen är AAL2.
+4. **Kräv MFA för alla:** ägaren kan under Admin > Inställningar kryssa i *Kräv tvåstegsverifiering för alla admins*. Admins utan faktor skickas då till Säkerhet och blockeras från resten tills de har registrerat en. Aktivera din egen först. Vid databasfel antas kravet gälla (fail closed).
+
+Sessionens nivå läses ur den signaturverifierade JWT:n (`getClaims`) och faktorerna från Auth-servern (`getUser`), aldrig från cookie-sessionen, som går att förfalska.
+
+**Tappad telefon / återställning:** Supabase har inga återhämtningskoder. En annan `owner` kan inte ta bort din faktor via appen. Ta bort den i Supabase (Authentication > Users > användaren, om dashboarden erbjuder *Remove MFA factors*) eller med SQL i SQL Editor, och registrera sedan en ny:
+
+```sql
+delete from auth.mfa_factors where user_id = (select id from auth.users where email = 'du@example.com');
+```
+
+Ha därför minst två `owner`-konton med egen faktor om fler än en person driver verksamheten.
 
 ### Övriga kommandon
 
@@ -196,7 +215,7 @@ pg_dump "$DATABASE_URL" --format=custom --schema=public --data-only --exclude-ta
 Återställningstest (gör det före launch och sedan med jämna mellanrum):
 
 1. Skapa ett tillfälligt Supabase-projekt.
-2. Kör migreringarna `...schema.sql`, `...rls.sql`, `...admin_roles.sql` och `...shop_geo.sql` (inte `...seed.sql`, den skulle ge dubbletter i `working_hours`).
+2. Kör migreringarna `...schema.sql`, `...rls.sql`, `...admin_roles.sql`, `...shop_geo.sql` och `...admin_mfa_setting.sql` (inte `...seed.sql`, den skulle ge dubbletter i `working_hours`).
 3. Återställ: `pg_restore --data-only --disable-triggers --no-owner -d "$TEST_DATABASE_URL" sh-cutz-data.dump`.
 4. Jämför antal rader: `select count(*) from bookings;` (samt `services`, `barbers`, `working_hours`, `shop_settings`) mot produktionsprojektet.
 5. Kontrollera att en bokning ser rätt ut och att exclusion constrainten finns kvar (`\d bookings`).
@@ -217,7 +236,7 @@ Status mot checklistan i [PLAN.md](PLAN.md) (avsnitt 19). **Klart** = verifierat
 | Felspårning (Sentry) aktiv | Klart i kod | Verifierat i Workers-runtime. Kräver `SENTRY_DSN` i produktion. |
 | Analytics aktiv | Ej byggt | Ingen analytics är införd (kundbeslut). Cookiefria alternativ: Cloudflare Web Analytics eller Plausible. Inför du analytics: uppdatera `/integritet`; cookie-notis behövs bara om analytics sätter cookies. |
 | Testbokning + testavbokning genomförd | Manuellt | Flödet är testat automatiskt (PGlite), men gör en riktig körning enligt avsnitt 5. |
-| Adminkonto säkrat med starkt lösenord/2FA | Delvis | Starkt lösenord och avstängd registrering: manuellt. **2FA är inte aktiverat i appen** (se Adminpanel ovan). |
+| Adminkonto säkrat med starkt lösenord/2FA | Klart i kod, aktivering manuell | TOTP-2FA med AAL2-krav finns (se Tvåstegsverifiering). Manuellt: starkt lösenord, avstängd registrering, registrera faktor för varje admin och kryssa i *Kräv tvåstegsverifiering för alla admins*. Flödet är enhetstestat men inte kört mot ett riktigt Supabase-projekt: testa det en gång (aktivera, logga ut, logga in med kod, ta bort). |
 
 ### Svar som behövs från kunden (PLAN.md avsnitt 18)
 
@@ -244,6 +263,7 @@ Status mot checklistan i [PLAN.md](PLAN.md) (avsnitt 19). **Klart** = verifierat
 6. Verifierad avsändardomän i Resend och `EMAIL_FROM`.
 7. Juridisk granskning av `/integritet`.
 8. Genomförd och godkänd backup-återställning samt testbokning/-avbokning.
+9. 2FA aktiverad för varje admin (och kravet påslaget), inklusive ett testat inloggningsflöde mot produktions-Supabase.
 
 ### Bör göras (blockerar inte)
 
@@ -251,4 +271,3 @@ Status mot checklistan i [PLAN.md](PLAN.md) (avsnitt 19). **Klart** = verifierat
 - Fyll i postnummer och koordinater för bättre lokal SEO.
 - Aktivera HSTS i Cloudflare.
 - Besluta om analytics och uppdatera `/integritet` om det införs.
-- Bygg tvåstegsverifiering (MFA/AAL2) för admin om fler än en person ska ha åtkomst.
