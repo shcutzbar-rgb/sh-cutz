@@ -45,7 +45,7 @@ export default async function Home() {
       <JsonLd data={buildHairSalonJsonLd(services, hours, shop)} />
 
       {/* Hero: ligger under den transparenta headern */}
-      <section className="grain relative -mt-16 flex min-h-[92svh] items-center overflow-hidden pt-16 sm:-mt-20 sm:pt-20">
+      <section className="grain texture-grid relative -mt-16 flex min-h-[92svh] items-center overflow-hidden pt-16 sm:-mt-20 sm:pt-20">
         {heroImage && (
           <>
             <Image src={heroImage.src} alt={heroImage.alt} fill priority sizes="100vw" className="-z-20 object-cover" />

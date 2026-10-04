@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { BarberAvatar } from "@/components/BarberAvatar";
 import { Turnstile } from "@/components/Turnstile";
 import { addDays, formatDateLongIn, formatTimeIn } from "@/lib/datetime";
+import { buildMonthGrid, shiftMonth } from "@/lib/booking-calendar";
 import { formatDuration, formatPrice } from "@/lib/format";
 import { buildIcs } from "@/lib/ics";
 import { siteConfig } from "@/lib/site";
@@ -47,20 +48,15 @@ const STEP_NUMBER: Record<Exclude<Step, "done">, number> = { service: 1, barber:
 const inputClass =
   "mt-1 w-full min-h-12 rounded-sm border border-line bg-surface px-3 py-3 text-foreground placeholder:text-foreground/40 focus:border-accent";
 
-const weekdayFmt = new Intl.DateTimeFormat("sv-SE", { weekday: "short", timeZone: "UTC" });
-const monthFmt = new Intl.DateTimeFormat("sv-SE", { month: "short", timeZone: "UTC" });
-
-function buildDays(min: string, max: string): string[] {
-  const days: string[] = [];
-  for (let d = min; d <= max; d = addDays(d, 1)) days.push(d);
-  return days;
-}
+const weekdayHeaders = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
+const monthFmt = new Intl.DateTimeFormat("sv-SE", { month: "long", year: "numeric", timeZone: "UTC" });
 
 export function BookingFlow({ services, barbers, timezone, minDate, maxDate, address, turnstileSiteKey }: Props) {
   const [step, setStep] = useState<Step>("service");
   const [service, setService] = useState<Service | null>(null);
   const [barber, setBarber] = useState<Barber | null>(null);
   const [date, setDate] = useState("");
+  const [visibleMonth, setVisibleMonth] = useState(minDate.slice(0, 7));
   const [slots, setSlots] = useState<string[] | null>(null);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState<string | null>(null);
@@ -79,7 +75,10 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
 
   const headingRef = useRef<HTMLHeadingElement>(null);
   const slotsRequest = useRef(0);
-  const days = useMemo(() => buildDays(minDate, maxDate), [minDate, maxDate]);
+  const monthDays = useMemo(() => buildMonthGrid(visibleMonth), [visibleMonth]);
+  const displayedMonth = monthFmt.format(new Date(`${visibleMonth}-01T12:00:00Z`));
+  const earliestMonth = minDate.slice(0, 7);
+  const latestMonth = maxDate.slice(0, 7);
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
@@ -118,7 +117,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
   }
 
   function selectDate(next: string) {
-    if (!service || !barber) return;
+    if (!service || !barber || next < minDate || next > maxDate) return;
     setDate(next);
     void loadSlots(next, service, barber);
   }
@@ -261,37 +260,76 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                 {service.name} hos {barber.name}
               </p>
 
-              <p id="day-label" className="mt-8 text-sm font-medium">
-                Datum
-              </p>
-              <ul
-                aria-labelledby="day-label"
-                className="-mx-4 mt-2 flex snap-x scroll-pl-4 gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:thin]"
-              >
-                {days.map((d) => {
-                  const asDate = new Date(`${d}T12:00:00Z`);
-                  const selected = d === date;
-                  return (
-                    <li key={d} className="snap-start">
-                      <button
-                        type="button"
-                        aria-pressed={selected}
-                        aria-label={formatDateLongIn(asDate, timezone)}
-                        onClick={() => selectDate(d)}
-                        className={`flex h-20 w-16 flex-col items-center justify-center rounded-sm border text-center transition-colors ${
-                          selected ? "border-accent bg-accent text-black" : "border-line bg-surface hover:border-accent"
-                        }`}
-                      >
-                        <span className="font-display text-xs uppercase tracking-[0.12em] opacity-80">
-                          {weekdayFmt.format(asDate).replace(".", "")}
-                        </span>
-                        <span className="font-display text-2xl font-bold leading-tight">{Number(d.slice(8, 10))}</span>
-                        <span className="text-[11px] uppercase opacity-70">{monthFmt.format(asDate).replace(".", "")}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="card texture-grid mt-6 p-3 sm:p-5" aria-labelledby="day-label">
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    aria-label="Föregående månad"
+                    disabled={visibleMonth <= earliestMonth}
+                    onClick={() => setVisibleMonth((month) => shiftMonth(month, -1))}
+                    className="flex h-11 w-11 items-center justify-center rounded-sm border border-line font-display text-2xl text-accent hover:border-accent disabled:opacity-30"
+                  >
+                    ‹
+                  </button>
+                  <h3 id="day-label" className="font-display text-xl font-semibold capitalize sm:text-2xl">
+                    {displayedMonth}
+                  </h3>
+                  <button
+                    type="button"
+                    aria-label="Nästa månad"
+                    disabled={visibleMonth >= latestMonth}
+                    onClick={() => setVisibleMonth((month) => shiftMonth(month, 1))}
+                    className="flex h-11 w-11 items-center justify-center rounded-sm border border-line font-display text-2xl text-accent hover:border-accent disabled:opacity-30"
+                  >
+                    ›
+                  </button>
+                </div>
+
+                <div className="mt-4" role="grid" aria-labelledby="day-label">
+                  <div role="row" className="grid grid-cols-7 gap-1">
+                    {weekdayHeaders.map((weekday) => (
+                      <div key={weekday} role="columnheader" className="py-2 text-center font-display text-xs uppercase tracking-wide text-foreground/55">
+                        {weekday}
+                      </div>
+                    ))}
+                  </div>
+                  {Array.from({ length: monthDays.length / 7 }, (_, weekIndex) => (
+                    <div key={weekIndex} role="row" className="grid grid-cols-7 gap-1">
+                      {monthDays.slice(weekIndex * 7, weekIndex * 7 + 7).map((day, dayIndex) => {
+                        if (!day) return <span key={`blank-${weekIndex}-${dayIndex}`} role="gridcell" aria-hidden className="aspect-square" />;
+                        const unavailable = day < minDate || day > maxDate;
+                        const selected = day === date;
+                        const today = day === minDate;
+                        return (
+                          <div key={day} role="gridcell" className="aspect-square">
+                            <button
+                              type="button"
+                              aria-pressed={selected}
+                              aria-label={`${formatDateLongIn(new Date(`${day}T12:00:00Z`), timezone)}${today ? ", idag" : ""}`}
+                              disabled={unavailable}
+                              onClick={() => selectDate(day)}
+                              className={`h-full w-full min-h-10 rounded-sm border text-sm transition-colors sm:min-h-11 ${
+                                selected
+                                  ? "border-accent bg-accent font-bold text-black"
+                                  : unavailable
+                                    ? "cursor-not-allowed border-transparent text-foreground/20"
+                                    : today
+                                      ? "border-accent/50 bg-accent/10 text-accent hover:bg-accent/20"
+                                      : "border-transparent text-foreground/85 hover:border-accent hover:bg-accent/10"
+                              }`}
+                            >
+                              {Number(day.slice(8, 10))}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 text-center text-xs text-foreground/55">
+                  Välj datum från idag till {formatDateLongIn(new Date(`${maxDate}T12:00:00Z`), timezone)}.
+                </p>
+              </div>
 
               <div className="mt-6 min-h-24" aria-live="polite">
                 {slotsLoading && (
