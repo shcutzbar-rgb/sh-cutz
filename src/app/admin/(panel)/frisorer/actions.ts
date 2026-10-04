@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { parseLocalDateTime } from "@/lib/datetime";
+import { dayRange, isValidDateString, parseLocalDateTime, todayIn } from "@/lib/datetime";
 import { siteConfig } from "@/lib/site";
-import { barberSchema, idSchema, timeOffSchema, workingHourSchema } from "@/lib/validation/admin";
+import { barberSchema, dayOffSchema, idSchema, timeOffSchema, workingHourSchema } from "@/lib/validation/admin";
 import { dbErrorMessage, done, fail, firstIssue, formObject, guardAction } from "@/server/admin-action";
 
 const LIST = "/admin/frisorer";
@@ -104,7 +104,33 @@ export async function addTimeOff(formData: FormData) {
   });
   if (error) fail(path, dbErrorMessage(error));
 
+  revalidatePublic();
   done(path, "Frånvaron är tillagd. Befintliga bokningar i perioden påverkas inte; flytta eller avboka dem vid behov.");
+}
+
+export async function addDayOff(formData: FormData) {
+  const raw = formObject(formData);
+  const path = detailPath(raw);
+  const admin = await guardAction("owner", path);
+  const parsed = dayOffSchema.safeParse(raw);
+  if (!parsed.success) fail(path, firstIssue(parsed.error));
+
+  const { barberId, date, reason } = parsed.data;
+  const tz = siteConfig.timezone;
+  if (!isValidDateString(date)) fail(path, "Välj ett giltigt datum.");
+  if (date < todayIn(tz)) fail(path, "Du kan inte lägga in ledighet bakåt i tiden.");
+
+  const { start, end } = dayRange(date, tz);
+  const { error } = await admin.supabase.from("time_off").insert({
+    barber_id: barberId,
+    start_at: start.toISOString(),
+    end_at: end.toISOString(),
+    reason: reason || null,
+  });
+  if (error) fail(path, dbErrorMessage(error));
+
+  revalidatePublic();
+  done(path, "Hela dagen är markerad som ledig. Befintliga bokningar påverkas inte; flytta eller avboka dem vid behov.");
 }
 
 export async function deleteTimeOff(formData: FormData) {
@@ -119,5 +145,6 @@ export async function deleteTimeOff(formData: FormData) {
   if (error) fail(path, dbErrorMessage(error));
   if (!data || data.length === 0) fail(path, "Frånvaron kunde inte tas bort.");
 
+  revalidatePublic();
   done(path, "Frånvaron är borttagen.");
 }

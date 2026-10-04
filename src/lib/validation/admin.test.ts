@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseLocalDateTime } from "@/lib/datetime";
 import {
   barberSchema,
+  dayOffSchema,
   serviceSchema,
   settingsSchema,
   timeOffSchema,
@@ -60,6 +61,18 @@ describe("timeOffSchema + parseLocalDateTime", () => {
   it("tolkar lokal tid i Stockholm (sommar- och vintertid)", () => {
     expect(parseLocalDateTime("2026-10-12T09:00", "Europe/Stockholm").toISOString()).toBe("2026-10-12T07:00:00.000Z");
     expect(parseLocalDateTime("2026-11-02T09:00", "Europe/Stockholm").toISOString()).toBe("2026-11-02T08:00:00.000Z");
+  });
+});
+
+describe("dayOffSchema", () => {
+  it("godkänner heldagsledighet med valfri anledning", () => {
+    expect(dayOffSchema.parse({ barberId: uuid, date: "2026-10-12", reason: "Semester" })).toMatchObject({
+      barberId: uuid,
+      date: "2026-10-12",
+    });
+    expect(dayOffSchema.safeParse({ barberId: "fel", date: "2026-10-12", reason: "" }).success).toBe(false);
+    expect(dayOffSchema.safeParse({ barberId: uuid, date: "12-10-2026", reason: "" }).success).toBe(false);
+    expect(dayOffSchema.safeParse({ barberId: uuid, date: "2026-10-12", reason: "x".repeat(201) }).success).toBe(false);
   });
 });
 

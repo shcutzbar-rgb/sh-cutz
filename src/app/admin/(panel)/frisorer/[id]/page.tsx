@@ -2,11 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { Flash, first, ui } from "@/components/admin/ui";
-import { formatDateLongIn, formatTimeIn } from "@/lib/datetime";
+import { dateIn, formatDateLongIn, formatTimeIn, todayIn } from "@/lib/datetime";
 import { weekdayNamesSv } from "@/lib/hours";
 import { siteConfig } from "@/lib/site";
 import { requireAdminPage } from "@/server/admin-auth";
-import { addTimeOff, addWorkingHours, deleteTimeOff, deleteWorkingHours } from "../actions";
+import { addDayOff, addTimeOff, addWorkingHours, deleteTimeOff, deleteWorkingHours } from "../actions";
 
 export const metadata = { title: "Arbetstider och frånvaro" };
 
@@ -28,6 +28,7 @@ export default async function BarberDetailPage({
   if (!z.uuid().safeParse(id).success) notFound();
   const sp = await searchParams;
   const tz = siteConfig.timezone;
+  const today = todayIn(tz);
 
   const { data: barber } = await admin.supabase.from("barbers").select("id,name").eq("id", id).maybeSingle();
   if (!barber) notFound();
@@ -104,7 +105,7 @@ export default async function BarberDetailPage({
             <label htmlFor="endTime" className={ui.label}>
               Till
             </label>
-            <input id="endTime" name="endTime" type="time" defaultValue="19:00" required className={ui.input} />
+            <input id="endTime" name="endTime" type="time" defaultValue="20:00" required className={ui.input} />
           </div>
           <button type="submit" className={ui.primary}>
             Lägg till
@@ -123,8 +124,11 @@ export default async function BarberDetailPage({
             {off.map((t) => (
               <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
                 <span>
-                  {formatDateLongIn(t.start_at, tz)} {formatTimeIn(t.start_at, tz)} till{" "}
-                  {formatDateLongIn(t.end_at, tz)} {formatTimeIn(t.end_at, tz)}
+                  {formatTimeIn(t.start_at, tz) === "00:00" &&
+                  formatTimeIn(t.end_at, tz) === "00:00" &&
+                  dateIn(tz, new Date(new Date(t.end_at).getTime() - 1)) === dateIn(tz, new Date(t.start_at))
+                    ? `Hela dagen: ${formatDateLongIn(t.start_at, tz)}`
+                    : `${formatDateLongIn(t.start_at, tz)} ${formatTimeIn(t.start_at, tz)} till ${formatDateLongIn(t.end_at, tz)} ${formatTimeIn(t.end_at, tz)}`}
                   {t.reason ? ` (${t.reason})` : ""}
                 </span>
                 <form action={deleteTimeOff}>
@@ -139,6 +143,25 @@ export default async function BarberDetailPage({
           </ul>
         )}
 
+        <form action={addDayOff} className="mt-5 flex flex-wrap items-end gap-3 border-t border-line pt-5">
+          <input type="hidden" name="barberId" value={id} />
+          <div>
+            <label htmlFor="dayOffDate" className={ui.label}>
+              Ledig hela dagen
+            </label>
+            <input id="dayOffDate" name="date" type="date" min={today} required className={ui.input} />
+          </div>
+          <div>
+            <label htmlFor="dayOffReason" className={ui.label}>
+              Anledning (valfri)
+            </label>
+            <input id="dayOffReason" name="reason" maxLength={200} className={ui.input} />
+          </div>
+          <button type="submit" className={ui.secondary}>
+            Markera ledig
+          </button>
+        </form>
+        <p className="mt-2 text-xs text-foreground/60">Frånvarotider anges i {tz}. Ledighet tar bort tider från kundkalendern. Befintliga bokningar påverkas inte; flytta eller avboka dem vid behov.</p>
         <form action={addTimeOff} className="mt-4 flex flex-wrap items-end gap-3">
           <input type="hidden" name="barberId" value={id} />
           <div>

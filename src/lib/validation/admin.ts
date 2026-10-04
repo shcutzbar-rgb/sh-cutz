@@ -55,6 +55,12 @@ export const timeOffSchema = z
   })
   .refine((v) => v.endAt > v.startAt, { message: "Slutet måste vara efter starten", path: ["endAt"] });
 
+export const dayOffSchema = z.object({
+  barberId: z.uuid(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Välj ett giltigt datum"),
+  reason: z.string().trim().max(200, "Anledningen är för lång"),
+});
+
 export const idSchema = z.object({ id: z.uuid() });
 
 export const mfaCodeSchema = z.object({
