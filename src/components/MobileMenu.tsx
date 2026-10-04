@@ -14,7 +14,7 @@ export function MobileMenu({ links }: { links: readonly NavLink[] }) {
 
   return (
     <div
-      className="relative md:hidden"
+      className="md:hidden"
       onKeyDown={(e) => {
         if (e.key === "Escape") setOpenPath(null);
       }}
@@ -25,24 +25,41 @@ export function MobileMenu({ links }: { links: readonly NavLink[] }) {
         aria-controls="mobile-menu"
         aria-label={open ? "Stäng meny" : "Öppna meny"}
         onClick={() => setOpenPath(open ? null : pathname)}
-        className="flex h-10 w-10 items-center justify-center rounded-md border border-white/15"
+        className="flex h-11 w-11 flex-col items-center justify-center gap-[5px] rounded-sm border border-line"
       >
-        <span aria-hidden className="text-xl leading-none">
-          {open ? "✕" : "☰"}
-        </span>
+        <span
+          aria-hidden
+          className={`h-px w-5 bg-foreground transition-transform duration-200 ${open ? "translate-y-[6px] rotate-45" : ""}`}
+        />
+        <span aria-hidden className={`h-px w-5 bg-foreground transition-opacity duration-200 ${open ? "opacity-0" : ""}`} />
+        <span
+          aria-hidden
+          className={`h-px w-5 bg-foreground transition-transform duration-200 ${open ? "-translate-y-[6px] -rotate-45" : ""}`}
+        />
       </button>
       {open && (
         <ul
           id="mobile-menu"
-          className="absolute right-0 top-12 w-56 rounded-lg border border-white/10 bg-background p-2 shadow-xl"
+          className="absolute inset-x-0 top-full border-b border-line bg-background/98 px-4 pb-6 pt-2 backdrop-blur"
         >
           {links.map((link) => (
-            <li key={link.href}>
-              <Link href={link.href} className="block rounded-md px-3 py-2 hover:bg-white/10">
+            <li key={link.href} className="border-b border-line last:border-0">
+              <Link
+                href={link.href}
+                className={`block py-4 font-display text-xl uppercase tracking-[0.12em] ${
+                  pathname === link.href ? "text-accent" : "text-foreground"
+                }`}
+                aria-current={pathname === link.href ? "page" : undefined}
+              >
                 {link.label}
               </Link>
             </li>
           ))}
+          <li className="pt-4">
+            <Link href="/boka" className="btn btn-primary w-full">
+              Boka tid
+            </Link>
+          </li>
         </ul>
       )}
     </div>

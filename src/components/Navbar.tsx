@@ -1,31 +1,32 @@
 import Link from "next/link";
+import { HeaderShell } from "@/components/HeaderShell";
 import { MobileMenu } from "@/components/MobileMenu";
 import { navLinks, siteConfig } from "@/lib/site";
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-background/90 backdrop-blur">
-      <nav
-        aria-label="Huvudmeny"
-        className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4"
-      >
-        <Link href="/" className="text-lg font-bold tracking-tight">
+    <HeaderShell>
+      <nav aria-label="Huvudmeny" className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:h-20">
+        <Link href="/" className="font-display text-2xl font-bold uppercase tracking-[0.12em]">
           {siteConfig.name}
+          <span aria-hidden className="text-accent">
+            .
+          </span>
         </Link>
 
-        <ul className="hidden items-center gap-6 md:flex">
+        <ul className="hidden items-center gap-8 md:flex">
           {navLinks.map((link) => (
             <li key={link.href}>
-              <Link href={link.href} className="text-sm text-foreground/80 hover:text-foreground">
+              <Link
+                href={link.href}
+                className="font-display text-sm uppercase tracking-[0.18em] text-foreground/75 transition-colors hover:text-accent"
+              >
                 {link.label}
               </Link>
             </li>
           ))}
           <li>
-            <Link
-              href="/boka"
-              className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-black hover:bg-accent/90"
-            >
+            <Link href="/boka" className="btn btn-primary btn-sm">
               Boka tid
             </Link>
           </li>
@@ -33,6 +34,6 @@ export function Navbar() {
 
         <MobileMenu links={navLinks} />
       </nav>
-    </header>
+    </HeaderShell>
   );
 }
