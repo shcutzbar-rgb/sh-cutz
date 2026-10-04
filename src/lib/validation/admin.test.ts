@@ -73,6 +73,7 @@ describe("settingsSchema", () => {
     postalCode: "",
     bookingIntervalMinutes: "15",
     cancellationPolicy: "",
+    dropInText: "",
     latitude: "",
     longitude: "",
   };
@@ -86,6 +87,18 @@ describe("settingsSchema", () => {
     expect(settingsSchema.safeParse({ ...ok, email: "fel" }).success).toBe(false);
     expect(settingsSchema.safeParse({ ...ok, bookingIntervalMinutes: "1" }).success).toBe(false);
     expect(settingsSchema.safeParse({ ...ok, shopName: "" }).success).toBe(false);
+  });
+
+  it("tolkar bekräftelsekryssrutorna för kontaktuppgifter och öppettider", () => {
+    const parsed = settingsSchema.parse({ ...ok, contactConfirmed: "on" });
+    expect(parsed.contactConfirmed).toBe(true);
+    expect(parsed.hoursConfirmed).toBe(false);
+  });
+
+  it("trimmar och begränsar drop-in-texten till 500 tecken", () => {
+    expect(settingsSchema.parse({ ...ok, dropInText: "  Dröppen fre 10-12  " }).dropInText).toBe("Dröppen fre 10-12");
+    expect(settingsSchema.safeParse({ ...ok, dropInText: "x".repeat(500) }).success).toBe(true);
+    expect(settingsSchema.safeParse({ ...ok, dropInText: "x".repeat(501) }).success).toBe(false);
   });
 
   it("tolkar kryssrutan för MFA-plikt", () => {

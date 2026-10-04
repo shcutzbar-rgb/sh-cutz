@@ -63,6 +63,12 @@ export default async function Home() {
         <div className="mt-6 max-w-sm">
           <OpeningHoursTable hours={hours} />
         </div>
+        {shop.dropInText && (
+          <div className="mt-6 max-w-sm rounded-lg border border-accent/40 p-4">
+            <h3 className="font-semibold">Dröppen</h3>
+            <p className="mt-1 whitespace-pre-line text-sm text-foreground/80">{shop.dropInText}</p>
+          </div>
+        )}
       </section>
 
       <section aria-labelledby="about-heading" className="mx-auto max-w-3xl px-4 py-12">

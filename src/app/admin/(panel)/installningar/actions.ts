@@ -30,6 +30,7 @@ export async function saveSettings(formData: FormData) {
     postal_code: v.postalCode || null,
     booking_interval_minutes: v.bookingIntervalMinutes,
     cancellation_policy: v.cancellationPolicy,
+    drop_in_text: v.dropInText,
     latitude: v.latitude === "" ? null : Number(v.latitude),
     longitude: v.longitude === "" ? null : Number(v.longitude),
     require_admin_mfa: v.requireAdminMfa,

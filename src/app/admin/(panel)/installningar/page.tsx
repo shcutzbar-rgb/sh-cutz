@@ -19,7 +19,7 @@ export default async function SettingsPage({
 
   const { data: s } = await admin.supabase
     .from("shop_settings")
-    .select("shop_name,phone,email,address_line,city,postal_code,booking_interval_minutes,cancellation_policy,latitude,longitude,require_admin_mfa,contact_confirmed_at,hours_confirmed_at")
+    .select("shop_name,phone,email,address_line,city,postal_code,booking_interval_minutes,cancellation_policy,drop_in_text,latitude,longitude,require_admin_mfa,contact_confirmed_at,hours_confirmed_at")
     .eq("id", 1)
     .maybeSingle();
   const hours = await getOpeningHours();
@@ -105,6 +105,15 @@ export default async function SettingsPage({
           <textarea id="cancellationPolicy" name="cancellationPolicy" rows={4} defaultValue={s?.cancellation_policy ?? ""} maxLength={2000} className={ui.input} />
           <p className="mt-1 text-xs text-foreground/60">
             Kunder kan avboka själva fram till {BOOKING_CONFIG.cancelDeadlineMinutes / 60} timmar före tiden. Ändra gränsen i koden (booking-config).
+          </p>
+        </div>
+        <div className="sm:col-span-2">
+          <label htmlFor="dropInText" className={ui.label}>
+            Dröppen (visas på startsidan och kontaktsidan, lämna tomt för att dölja)
+          </label>
+          <textarea id="dropInText" name="dropInText" rows={3} defaultValue={s?.drop_in_text ?? ""} maxLength={500} className={ui.input} />
+          <p className="mt-1 text-xs text-foreground/60">
+            Skriv fritt, t.ex. vilka dagar och tider drop-in gäller. Max 500 tecken.
           </p>
         </div>
         <fieldset className="space-y-3 rounded-lg border border-white/10 p-4 sm:col-span-2">

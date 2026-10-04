@@ -64,6 +64,13 @@ export default async function KontaktPage() {
             </div>
           </div>
 
+          {shop.dropInText && (
+            <div>
+              <h2 className="font-semibold">Dröppen</h2>
+              <p className="mt-2 whitespace-pre-line text-foreground/70">{shop.dropInText}</p>
+            </div>
+          )}
+
           {shop.cancellationPolicy && (
             <div>
               <h2 className="font-semibold">Avbokning</h2>

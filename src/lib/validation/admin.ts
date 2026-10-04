@@ -81,6 +81,7 @@ export const settingsSchema = z
     postalCode: z.string().trim().max(10),
     bookingIntervalMinutes: int(5, 120, "Intervallet"),
     cancellationPolicy: z.string().trim().max(2000, "Policytexten är för lång"),
+    dropInText: z.string().trim().max(500, "Dröppen-texten får vara högst 500 tecken"),
     latitude: coordinate(90, "Latitud"),
     longitude: coordinate(180, "Longitud"),
     requireAdminMfa: checkbox,
