@@ -83,8 +83,20 @@ Adminpanelen ligger på `/admin` och använder Supabase Auth (e-post + lösenord
 
 | Roll | Får |
 | --- | --- |
-| `staff` | Översikt, kalender, bokningar (bekräfta, avboka, flytta, genomförd, no-show) |
+| `staff` | Översikt, kalender, bokningar (bekräfta, avboka, flytta, genomförd, no-show). Kan begränsas till en egen frisör, se nedan |
 | `owner` | Allt ovan samt tjänster, frisörer (inkl. arbetstider och frånvaro) och inställningar |
+
+**Personal per frisör:** koppla en `staff`-användare till en frisör så ser och ändrar hen bara den frisörens bokningar (RLS-policyn `bookings_admin_access` och funktionen `can_access_barber()` i `20261003160000_staff_barber.sql`, plus filtrerade val i gränssnittet). Utan koppling (`barber_id` är `null`) ser personalen alla, och ägare är aldrig begränsade. Kopplingen sätts med SQL (ingen UI, och personal kan inte ändra den själv):
+
+```sql
+update admin_users set barber_id = '<frisör-uuid>' where id = (select id from auth.users where email = 'personal@example.com');
+```
+
+En frisör som är kopplad till en användare kan inte raderas (`on delete restrict`); inaktivera i stället eller ta bort kopplingen först.
+
+**Mejl vid flytt:** när admin flyttar en bokning får kunden ett mejl (`booking-moved`) med ny och tidigare tid om e-post finns. Saknas e-post visas en uppmaning att ringa kunden.
+
+**Bekräftelse och dröppen:** under Admin > Inställningar bekräftar ägaren att kontaktuppgifter och öppettider stämmer (sparas som tidsstämplar, och avkryssning gör dem obekräftade igen). Översikten visar vad som återstår. Samma sida har en fri text för *Dröppen* som visas på startsidan och kontaktsidan när den inte är tom.
 
 Behörighet kontrolleras på servern i layouten, på varje sida och i varje server action. Adminåtgärder körs med den inloggade användarens egen session, så RLS (`20261003110000_admin_roles.sql`) gäller som ett andra lager. Öppettider på sajten härleds från frisörernas arbetstider.
 
@@ -94,7 +106,7 @@ Admin skyddas av TOTP (autentiseringsapp) via Supabase MFA.
 
 1. Kontrollera att TOTP är påslaget i Supabase: Authentication > Sign In / Providers > Multi-Factor.
 2. Logga in och öppna **Säkerhet** (`/admin/sakerhet`) > *Aktivera tvåstegsverifiering*. Skanna QR-koden och bekräfta med första koden.
-3. Framöver förär inloggningen en kod på `/admin/login/mfa`. Användare med verifierad faktor får **ingen** åtkomst till `/admin` eller adminåtgärder förrän sessionen är AAL2.
+3. Framöver frågar inloggningen efter en kod på `/admin/login/mfa`. Användare med verifierad faktor får **ingen** åtkomst till `/admin` eller adminåtgärder förrän sessionen är AAL2.
 4. **Kräv MFA för alla:** ägaren kan under Admin > Inställningar kryssa i *Kräv tvåstegsverifiering för alla admins*. Admins utan faktor skickas då till Säkerhet och blockeras från resten tills de har registrerat en. Aktivera din egen först. Vid databasfel antas kravet gälla (fail closed).
 
 Sessionens nivå läses ur den signaturverifierade JWT:n (`getClaims`) och faktorerna från Auth-servern (`getUser`), aldrig från cookie-sessionen, som går att förfalska.
@@ -113,10 +125,20 @@ Ha därför minst två `owner`-konton med egen faktor om fler än en person driv
 | --- | --- |
 | `npm run lint` | Kör ESLint |
 | `npm test` | Enhetstester och end-to-end-test av bokning/avbokning mot PGlite (vitest) |
-| `npm run check:live -- https://din-domän.se` | Kontrollerar en körande sajt mot go-live-checklistan (robots, sitemap, canonical, JSON-LD, headers, adminskydd, hälsokontroll) |
+| `npm run check:live -- https://din-domän.se` | Kontrollerar en körande sajt mot go-live-checklistan (robots, sitemap, canonical, JSON-LD, headers, adminskydd, hälsokontroll, bekräftade kontaktuppgifter/öppettider) |
+| `npm run check:launch` | Stoppar (exit 1) om sajten fortfarande har utkastvärden: saknad `NEXT_PUBLIC_SITE_URL`, platshållarbilder i galleriet eller obekräftade/seed-lika kontaktuppgifter och öppettider. Körs automatiskt av `predeploy` och `preupload`, alltså före `npm run deploy` |
+| `npm run verify` | Kör lint, tester och bygge lokalt (samma som CI) |
 | `npm run build` | Produktionsbygge (Next.js) |
 | `npm run preview` | Förhandsgranska på Cloudflare-runtime (läser `.dev.vars`, kopiera från `.env.example`) |
 | `npm run deploy` | Bygg och deploya till Cloudflare |
+
+### CI (GitHub Actions)
+
+`.github/workflows/ci.yml` körs vid varje push och pull request: `npm run lint`, `npm test`, `npm run build`, `opennextjs-cloudflare build` samt en kontroll att workern efter `wrangler deploy --dry-run` ligger under 3072 KiB gzip (gratisplanens gräns). Ett separat jobb kör `npm audit --omit=dev` (körtidsberoenden; misslyckas vid skärpta sårbarheter). CI-bygget använder `NEXT_PUBLIC_SITE_URL=https://example.com` och kör alltså inte launch-spärren, som bara gäller deploy.
+
+### Launch-spärr (inga utkastvärden live)
+
+`npm run deploy` och `npm run upload` kör först `npm run check:launch` (npm `predeploy`/`preupload`). Spärren läser miljön och `.env.production.local`/`.env.local`, kontrollerar `NEXT_PUBLIC_SITE_URL`, platshållarbilder och (om `NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY` finns) att kontaktuppgifter och öppettider är bekräftade i Admin > Inställningar och inte längre seed-värden. Lägg därför Supabase-variablerna i `.env.production.local` för en lokal deploy. För en test-/stagingmiljö kan spärren kringgås med `ALLOW_DRAFT_DEPLOY=1` (använd aldrig för produktion). Workers Builds i git kör också `npm run deploy` och får därmed samma spärr om bygg-variablerna är satta. Efter deploy larmar `npm run check:live` om bekräftelsen saknas.
 
 ## Projektstruktur
 
@@ -215,7 +237,7 @@ pg_dump "$DATABASE_URL" --format=custom --schema=public --data-only --exclude-ta
 Återställningstest (gör det före launch och sedan med jämna mellanrum):
 
 1. Skapa ett tillfälligt Supabase-projekt.
-2. Kör migreringarna `...schema.sql`, `...rls.sql`, `...admin_roles.sql`, `...shop_geo.sql` och `...admin_mfa_setting.sql` (inte `...seed.sql`, den skulle ge dubbletter i `working_hours`).
+2. Kör migreringarna `...schema.sql`, `...rls.sql`, `...admin_roles.sql`, `...shop_geo.sql`, `...admin_mfa_setting.sql`, `...launch_confirmation.sql`, `...drop_in_text.sql` och `...staff_barber.sql` (inte `...seed.sql`, den skulle ge dubbletter i `working_hours`).
 3. Återställ: `pg_restore --data-only --disable-triggers --no-owner -d "$TEST_DATABASE_URL" sh-cutz-data.dump`.
 4. Jämför antal rader: `select count(*) from bookings;` (samt `services`, `barbers`, `working_hours`, `shop_settings`) mot produktionsprojektet.
 5. Kontrollera att en bokning ser rätt ut och att exclusion constrainten finns kvar (`\d bookings`).
@@ -227,8 +249,8 @@ Status mot checklistan i [PLAN.md](PLAN.md) (avsnitt 19). **Klart** = verifierat
 
 | Punkt | Status | Kommentar |
 | --- | --- | --- |
-| Verifierade kontaktuppgifter | Manuellt | Adress och telefon är utkast i `src/lib/site.ts` och seed. Fyll i riktiga uppgifter (inkl. postnummer och koordinater) under Admin > Inställningar. |
-| Öppettider | Manuellt | Seed och statisk fallback är påhittade utkast (mån–fre 10–19, lör 10–17). Sätt riktiga arbetstider under Admin > Frisörer. |
+| Verifierade kontaktuppgifter | Manuellt, med spärr | Adress och telefon är utkast i `src/lib/site.ts` och seed. Fyll i riktiga uppgifter (inkl. postnummer och koordinater) under Admin > Inställningar och kryssa i bekräftelsen. `npm run deploy` stoppar och `check:live` larmar tills det är gjort. |
+| Öppettider | Manuellt, med spärr | Seed är påhittade utkast (mån–fre 10–19, lör 10–17). Det finns ingen statisk fallback längre: utan arbetstider i databasen visar sajten ingen öppettidstabell. Sätt riktiga arbetstider under Admin > Frisörer och bekräfta dem under Inställningar. Obs: bekräftelsen är en mänsklig kontroll, spärren kan inte veta att tiderna är sanna. |
 | Domän + HTTPS + korrekt DNS | Manuellt | Se avsnitt 4. Kontrolleras av `check:live`. |
 | SEO metadata + sitemap live | Klart i kod | Sitemap, robots, canonical, Open Graph/Twitter, OG-bild och JSON-LD finns. Kräver `NEXT_PUBLIC_SITE_URL` vid bygge. Lighthouse (mobil): Performance 96–98, Accessibility 100, Best Practices 100, SEO 100. |
 | Policy-sidor publicerade | Klart i kod, juridik manuellt | `/integritet` finns och är länkad i footern och i bokningsflödet. Texten är ett utkast: låt verksamheten granska den (organisationsnummer, lagringstid 12 månader). |
@@ -246,16 +268,16 @@ Status mot checklistan i [PLAN.md](PLAN.md) (avsnitt 19). **Klart** = verifierat
 | 2 | Helgdagar/röda dagar: öppet eller stängt? | Lägg in som frånvaro per frisör och dag (Admin > Frisörer). Ingen automatisk helgdagslogik finns. |
 | 3 | Hur långt i förväg får man boka? | `maxDaysAhead` (nu 30) i `src/lib/booking-config.ts`. |
 | 4 | Hur sent får man avboka? | `cancelDeadlineMinutes` (nu 120) i `booking-config.ts` och policytext i Admin > Inställningar. |
-| 5 | Ska drop-in kommuniceras? | Innehållsbeslut: text på startsida/kontakt saknas idag. |
+| 5 | Ska drop-in kommuniceras? | Byggt: fri text under Admin > Inställningar visas på startsida och kontakt när den är ifylld. Beslut om innehåll kvarstår. |
 | 6 | Svenska + engelska? | Inte byggt (V2). Sajten är bara på svenska. |
-| 7 | Ska flera frisörer logga in separat? | Roller `owner`/`staff` finns, men `staff` kopplas inte till en viss frisör; alla ser alla bokningar. Behövs per-frisör-behörighet krävs mer utveckling. |
+| 7 | Ska flera frisörer logga in separat? | Byggt: koppla `staff` till en frisör med SQL (se Adminpanel). Kopplade användare ser bara sin frisörs bokningar. Flertalet verksamheter behöver inte mer, men kopplingen saknar UI. |
 | 8 | Presentkort eller rabattkoder vid launch? | Inte byggt (V2). |
 | 9 | SMS-påminnelse nu eller senare? | Inte byggt; påminnelser skickas via e-post och kräver att kunden anger e-post. |
 | 10 | Finns logotyp, färger och bildmaterial? | Galleriet visar platshållarbilder, och logotyp saknas. Ersätt `public/gallery/*` (helst webp) och uppdatera alt-texter i `src/lib/gallery.ts`. |
 
 ### Blockerar launch
 
-1. Riktiga kontaktuppgifter och öppettider (inget får gå ut med utkastvärdena).
+1. Riktiga kontaktuppgifter och öppettider, bekräftade i Admin > Inställningar (inget får gå ut med utkastvärdena; deploy-spärren stoppar annars).
 2. Riktiga galleribilder (platshållarna syns för besökare).
 3. Domän, DNS, HTTPS och `NEXT_PUBLIC_SITE_URL` satt vid bygge (annars pekar sitemap och canonical på fel adress).
 4. Produktions-Supabase med migreringar, första admin och avstängd registrering.
