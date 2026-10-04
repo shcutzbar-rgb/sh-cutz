@@ -228,5 +228,25 @@ class Builder implements PromiseLike<{ data: any; error: any }> {
 
 /** Ger något som liknar `SupabaseClient` för de anrop serverkoden gör. */
 export function createPgliteSupabase(db: PGlite): any {
-  return { from: (table: string) => new Builder(db, table) };
+  return {
+    from: (table: string) => new Builder(db, table),
+    rpc: async (name: string, args: Record<string, unknown>) => {
+      try {
+        if (name === "claim_booking_slot") {
+          const result = await db.query<{ claim_booking_slot: boolean }>(
+            "select claim_booking_slot($1,$2,$3,$4,$5)",
+            [args.p_token_hash, args.p_barber_id, args.p_start_at, args.p_end_at, args.p_expires_at],
+          );
+          return { data: result.rows[0]?.claim_booking_slot ?? false, error: null };
+        }
+        if (name === "release_booking_slot") {
+          await db.query("select release_booking_slot($1)", [args.p_token_hash]);
+          return { data: null, error: null };
+        }
+        throw new Error(`Okänt RPC i testadaptern: ${name}`);
+      } catch (error: any) {
+        return { data: null, error: { code: error.code, message: error.message } };
+      }
+    },
+  };
 }

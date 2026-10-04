@@ -27,6 +27,7 @@ import { BookingError } from "./errors";
 import { sendDueReminders } from "./reminders";
 import { anonymizeOldBookings } from "./retention";
 import { hashToken } from "./tokens";
+import { claimSlotHold } from "./slot-holds";
 
 // Hela flödet mot riktiga migreringar i PGlite (Postgres), med riktiga constraints.
 const SERVICE = "00000000-0000-4000-8000-000000000001"; // Fade, 30 min
@@ -42,6 +43,7 @@ const input = (startAt: string, over: Partial<CreateBookingInput> = {}): CreateB
   serviceId: SERVICE,
   barberId: BARBER,
   startAt,
+  holdToken: "00000000-0000-4000-8000-000000000099",
   customerName: "Anna Svensson",
   customerPhone: "0701234567",
   customerEmail: "anna@example.com",
@@ -70,7 +72,10 @@ beforeAll(async () => {
 
   pg = new PGlite({ extensions: { btree_gist } });
   // Minimal ersättning för Supabases auth-schema som migreringarna refererar till.
-  await pg.exec(`create schema auth;
+  await pg.exec(`create role anon;
+    create role authenticated;
+    create role service_role;
+    create schema auth;
     create table auth.users (id uuid primary key);
     create function auth.uid() returns uuid language sql stable as $$ select null::uuid $$;`);
   const dir = path.resolve(__dirname, "../../supabase/migrations");
@@ -86,7 +91,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await pg.exec("delete from bookings; delete from time_off;");
+  await pg.exec("delete from bookings; delete from time_off; delete from booking_slot_holds;");
   state.reminderMail = true;
 });
 
@@ -151,6 +156,37 @@ describe("tillgänglighet och bokning", () => {
       expect(err).toMatchObject({ code: "slot_unavailable", status: 409 });
     }
     expect(await rows()).toHaveLength(1);
+  });
+
+  it("reserverar valt datum för första kunden medan hen fyller i formuläret", async () => {
+    const firstCustomer = input(at("08:00"), { holdToken: "00000000-0000-4000-8000-000000000101" });
+    const secondCustomer = input(at("08:00"), { holdToken: "00000000-0000-4000-8000-000000000102" });
+    await claimSlotHold({
+      serviceId: SERVICE,
+      barberId: BARBER,
+      startAt: firstCustomer.startAt,
+      holdToken: firstCustomer.holdToken,
+    }, NOW);
+
+    await expect(slotsAt()).resolves.not.toContain(at("08:00"));
+    await expect(claimSlotHold({
+      serviceId: SERVICE,
+      barberId: BARBER,
+      startAt: secondCustomer.startAt,
+      holdToken: secondCustomer.holdToken,
+    }, NOW)).rejects.toMatchObject({ code: "slot_unavailable", status: 409 });
+
+    await expect(createBooking(firstCustomer, NOW)).resolves.toBeDefined();
+    expect(await rows()).toHaveLength(1);
+  });
+
+  it("ger bara en av två samtidiga kunder en reservation för samma tid", async () => {
+    const claims = ["00000000-0000-4000-8000-000000000111", "00000000-0000-4000-8000-000000000112"].map((holdToken) =>
+      claimSlotHold({ serviceId: SERVICE, barberId: BARBER, startAt: at("08:00"), holdToken }, NOW),
+    );
+    const result = await Promise.allSettled(claims);
+    expect(result.filter((entry) => entry.status === "fulfilled")).toHaveLength(1);
+    expect(result.filter((entry) => entry.status === "rejected")).toHaveLength(1);
   });
 
   it("släpper igenom exakt en av två samtidiga bokningar av samma tid", async () => {

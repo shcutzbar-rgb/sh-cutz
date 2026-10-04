@@ -18,6 +18,7 @@ export type MonthAvailability = { date: string; available: boolean }[];
 export type AvailabilityOptions = {
   /** Ignorera denna bokning som upptagen (vid flytt av en befintlig bokning). */
   excludeBookingId?: string;
+  excludeHoldTokenHash?: string;
   /** Admin: ingen minsta framförhållning och ingen bokningshorisont. */
   adminOverride?: boolean;
 };
@@ -70,7 +71,7 @@ export async function getAvailability(
     .gt("end_at", start.toISOString());
   if (options.excludeBookingId) bookingsQuery = bookingsQuery.neq("id", options.excludeBookingId);
 
-  const [hoursRes, timeOffRes, bookingsRes, settingsRes] = await Promise.all([
+  const [hoursRes, timeOffRes, bookingsRes, holdsRes, settingsRes] = await Promise.all([
     supabase
       .from("working_hours")
       .select("start_time,end_time")
@@ -84,13 +85,28 @@ export async function getAvailability(
       .lt("start_at", end.toISOString())
       .gt("end_at", start.toISOString()),
     bookingsQuery,
+    options.adminOverride
+      ? Promise.resolve({ data: [], error: null })
+      : (() => {
+          let query = supabase
+            .from("booking_slot_holds")
+            .select("start_at,end_at")
+            .eq("barber_id", barberId)
+            .eq("active", true)
+            .gt("expires_at", now.toISOString())
+            .lt("start_at", end.toISOString())
+            .gt("end_at", start.toISOString());
+          if (options.excludeHoldTokenHash) query = query.neq("token_hash", options.excludeHoldTokenHash);
+          return query;
+        })(),
     supabase.from("shop_settings").select("booking_interval_minutes").eq("id", 1).maybeSingle(),
   ]);
   failOnError(hoursRes.error);
   failOnError(timeOffRes.error);
   failOnError(bookingsRes.error);
+  failOnError(holdsRes.error);
 
-  const busy: Interval[] = [...(timeOffRes.data ?? []), ...(bookingsRes.data ?? [])].map((r) => ({
+  const busy: Interval[] = [...(timeOffRes.data ?? []), ...(bookingsRes.data ?? []), ...(holdsRes.data ?? [])].map((r) => ({
     start: new Date(r.start_at),
     end: new Date(r.end_at),
   }));
@@ -142,7 +158,7 @@ export async function getMonthAvailability(
   failOnError(barberRes.error);
   if (!serviceRes.data || !barberRes.data) throw new BookingError("not_found", "Tjänst eller frisör finns inte.", 404);
 
-  const [hoursRes, timeOffRes, bookingsRes, settingsRes] = await Promise.all([
+  const [hoursRes, timeOffRes, bookingsRes, holdsRes, settingsRes] = await Promise.all([
     supabase.from("working_hours").select("weekday,start_time,end_time").eq("barber_id", barberId).eq("is_active", true),
     supabase
       .from("time_off")
@@ -157,14 +173,23 @@ export async function getMonthAvailability(
       .in("status", ["pending", "confirmed"])
       .lt("start_at", rangeEnd.toISOString())
       .gt("end_at", rangeStart.toISOString()),
+    supabase
+      .from("booking_slot_holds")
+      .select("start_at,end_at")
+      .eq("barber_id", barberId)
+      .eq("active", true)
+      .gt("expires_at", now.toISOString())
+      .lt("start_at", rangeEnd.toISOString())
+      .gt("end_at", rangeStart.toISOString()),
     supabase.from("shop_settings").select("booking_interval_minutes").eq("id", 1).maybeSingle(),
   ]);
   failOnError(hoursRes.error);
   failOnError(timeOffRes.error);
   failOnError(bookingsRes.error);
+  failOnError(holdsRes.error);
 
   const workingHours = hoursRes.data ?? [];
-  const busyIntervals: Interval[] = [...(timeOffRes.data ?? []), ...(bookingsRes.data ?? [])].map((row) => ({
+  const busyIntervals: Interval[] = [...(timeOffRes.data ?? []), ...(bookingsRes.data ?? []), ...(holdsRes.data ?? [])].map((row) => ({
     start: new Date(row.start_at),
     end: new Date(row.end_at),
   }));

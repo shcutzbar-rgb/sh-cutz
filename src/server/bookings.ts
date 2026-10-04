@@ -23,11 +23,13 @@ const UNIQUE_VIOLATION = "23505";
 export async function createBooking(input: CreateBookingInput, now: Date = new Date()): Promise<CreatedBooking> {
   const start = new Date(input.startAt);
   const date = dateIn(siteConfig.timezone, start);
+  const holdTokenHash = await hashToken(input.holdToken);
 
   // Servern avgör alltid om tiden är ledig; klientens val litas inte på.
   const { service, barber, slots } = await getAvailability(
     { serviceId: input.serviceId, barberId: input.barberId, date },
     now,
+    { excludeHoldTokenHash: holdTokenHash },
   );
   if (!slots.some((s) => s.getTime() === start.getTime())) {
     throw new BookingError("slot_unavailable", "Tiden är inte längre ledig. Välj en annan tid.", 409);
@@ -50,6 +52,7 @@ export async function createBooking(input: CreateBookingInput, now: Date = new D
         notes: input.notes || null,
         status: "confirmed",
         cancel_token_hash: await hashToken(cancelToken),
+        slot_hold_token_hash: holdTokenHash,
       })
       .select("id")
       .single();

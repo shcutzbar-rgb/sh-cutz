@@ -22,6 +22,7 @@ export const createBookingSchema = customerSchema.extend({
   serviceId: z.uuid(),
   barberId: z.uuid(),
   startAt: z.iso.datetime({ offset: true }),
+  holdToken: z.uuid(),
   // Honeypot: ska vara tom för riktiga användare.
   website: z.string().max(0).optional(),
   turnstileToken: z.string().max(2048).optional(),

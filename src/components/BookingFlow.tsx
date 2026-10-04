@@ -64,8 +64,11 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
   const [monthAvailabilityError, setMonthAvailabilityError] = useState<string | null>(null);
   const [slots, setSlots] = useState<string[] | null>(null);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [slotHoldLoading, setSlotHoldLoading] = useState(false);
   const [slotsError, setSlotsError] = useState<string | null>(null);
   const [startAt, setStartAt] = useState<string | null>(null);
+  const [holdToken, setHoldToken] = useState<string | null>(null);
+  const [holdExpiresAt, setHoldExpiresAt] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [cancelUrl, setCancelUrl] = useState("");
@@ -152,14 +155,61 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
     }
   }
 
-  function selectDate(next: string) {
+  async function releaseCurrentHold() {
+    const token = holdToken;
+    setHoldToken(null);
+    setHoldExpiresAt(null);
+    setStartAt(null);
+    if (!token) return;
+    try {
+      await fetch("/api/availability/release", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ holdToken: token }),
+        keepalive: true,
+      });
+    } catch {
+      // The database expires abandoned holds after five minutes.
+    }
+  }
+
+  async function holdSlot(slot: string) {
+    if (!service || !barber) return;
+    setSlotHoldLoading(true);
+    setSlotsError(null);
+    await releaseCurrentHold();
+    const token = crypto.randomUUID();
+    try {
+      const response = await fetch("/api/availability/hold", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serviceId: service.id, barberId: barber.id, startAt: slot, holdToken: token }),
+      });
+      const data = (await response.json()) as { expiresAt?: string; error?: string };
+      if (!response.ok || !data.expiresAt) {
+        setSlotsError(data.error ?? "Tiden kunde inte reserveras. Välj en annan tid.");
+        if (date) void loadSlots(date, service, barber);
+        return;
+      }
+      setHoldToken(token);
+      setHoldExpiresAt(data.expiresAt);
+      setStartAt(slot);
+    } catch {
+      setSlotsError("Tiden kunde inte reserveras. Kontrollera anslutningen och försök igen.");
+    } finally {
+      setSlotHoldLoading(false);
+    }
+  }
+
+  async function selectDate(next: string) {
     if (!service || !barber || next < minDate || next > maxDate) return;
     setDate(next);
+    await releaseCurrentHold();
     void loadSlots(next, service, barber);
   }
 
   async function onSubmit(values: CustomerFormValues) {
-    if (!service || !barber || !startAt) return;
+    if (!service || !barber || !startAt || !holdToken) return;
     setSubmitError(null);
 
     try {
@@ -171,6 +221,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
           serviceId: service.id,
           barberId: barber.id,
           startAt,
+          holdToken,
           website: (document.getElementById("website") as HTMLInputElement | null)?.value ?? "",
           turnstileToken: captchaToken,
         }),
@@ -183,6 +234,8 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
       };
 
       if (res.status === 201 && data.booking) {
+        setHoldToken(null);
+        setHoldExpiresAt(null);
         setConfirmation(data.booking);
         setCancelUrl(`${window.location.origin}/avboka/${data.booking.cancelToken}`);
         setStep("done");
@@ -196,6 +249,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
         }
       }
       if (res.status === 409) {
+        await releaseCurrentHold();
         setSlotsError(data.error ?? "Tiden är inte längre ledig. Välj en annan tid.");
         setStep("time");
         void loadSlots(date, service, barber);
@@ -227,6 +281,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                       type="button"
                       aria-pressed={service?.id === s.id}
                       onClick={() => {
+                        void releaseCurrentHold();
                         if (service?.id !== s.id) {
                           setSlots(null);
                           setStartAt(null);
@@ -263,6 +318,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                       type="button"
                       aria-pressed={barber?.id === b.id}
                       onClick={() => {
+                        void releaseCurrentHold();
                         setBarber(b);
                         setStep("time");
                         // Förvälj första dagen så att lediga tider syns direkt.
@@ -283,7 +339,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                   </li>
                 ))}
               </ul>
-              <button type="button" onClick={() => setStep("service")} className="btn btn-secondary mt-8">
+              <button type="button" onClick={() => { void releaseCurrentHold(); setStep("service"); }} className="btn btn-secondary mt-8">
                 Tillbaka
               </button>
             </section>
@@ -349,7 +405,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                               aria-pressed={selected}
                               aria-label={`${formatDateLongIn(new Date(`${day}T12:00:00Z`), timezone)}${today ? ", idag" : ""}${availabilityLabel}`}
                               disabled={unavailable}
-                              onClick={() => selectDate(day)}
+                              onClick={() => void selectDate(day)}
                               className={`h-full w-full min-h-10 rounded-sm border text-sm transition-colors sm:min-h-11 ${
                                 selected
                                   ? "border-accent bg-accent font-bold text-black"
@@ -402,7 +458,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                     <p className="font-medium">Inga lediga tider den här dagen.</p>
                     <p className="mt-1 text-sm text-foreground/70">Prova en annan dag.</p>
                     {nextDay && (
-                      <button type="button" onClick={() => selectDate(nextDay)} className="btn btn-secondary btn-sm mt-4">
+                      <button type="button" onClick={() => void selectDate(nextDay)} className="btn btn-secondary btn-sm mt-4">
                         Visa nästa dag
                       </button>
                     )}
@@ -415,8 +471,9 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                         <button
                           type="button"
                           aria-pressed={startAt === iso}
-                          onClick={() => setStartAt(iso)}
-                          className={`min-h-12 w-full rounded-sm border px-3 py-2 font-display text-lg tracking-wide transition-colors ${
+                          disabled={slotHoldLoading}
+                          onClick={() => void holdSlot(iso)}
+                          className={`min-h-12 w-full rounded-sm border px-3 py-2 font-display text-lg tracking-wide transition-colors disabled:opacity-50 ${
                             startAt === iso
                               ? "border-accent bg-accent text-black"
                               : "border-line bg-surface hover:border-accent"
@@ -428,10 +485,16 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                     ))}
                   </ul>
                 )}
+                {slotHoldLoading && <p className="mt-3 text-sm text-foreground/70" role="status">Reserverar tiden...</p>}
+                {holdToken && holdExpiresAt && (
+                  <p className="mt-3 text-sm text-emerald-300" role="status">
+                    Tiden är reserverad i 5 minuter medan du fyller i dina uppgifter.
+                  </p>
+                )}
               </div>
 
               <div className="mt-8 flex gap-3">
-                <button type="button" onClick={() => setStep("barber")} className="btn btn-secondary">
+                <button type="button" onClick={() => { void releaseCurrentHold(); setStep("barber"); }} className="btn btn-secondary">
                   Tillbaka
                 </button>
                 <button type="button" disabled={!startAt} onClick={() => setStep("details")} className="btn btn-primary">

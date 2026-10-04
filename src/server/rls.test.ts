@@ -37,7 +37,7 @@ const insertBooking = (barber: string, hash: string, startAt = "2026-10-12T10:00
 
 beforeAll(async () => {
   pg = new PGlite({ extensions: { btree_gist } });
-  await pg.exec(`create role authenticated; create role anon; create schema auth;
+  await pg.exec(`create role authenticated; create role anon; create role service_role; create schema auth;
     create table auth.users (id uuid primary key);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.sub', true), '')::uuid $$;
     grant usage on schema auth to authenticated, anon;`);
@@ -87,6 +87,27 @@ describe("RLS: bokningar per frisör", () => {
   it("personal kan inte skapa bokning åt en annan frisör", async () => {
     expect((await as("authenticated", STAFF_A, insertBooking(BARBER_B, "x1"))).code).toBe("42501");
     expect((await as("authenticated", STAFF_A, insertBooking(BARBER_A, "x2", "2026-10-12T12:00:00Z", "2026-10-12T12:30:00Z"))).code).toBeNull();
+  });
+
+  it("admin kan flytta en bokning till en kundreserverad tid och frigör reservationen", async () => {
+    const hash = "a".repeat(64);
+    const heldStart = "2026-10-12T11:00:00Z";
+    const heldEnd = "2026-10-12T11:30:00Z";
+    const claim = await pg.query<{ claim_booking_slot: boolean }>(
+      "select claim_booking_slot($1,$2,$3,$4,now()+interval '5 minutes')",
+      [hash, BARBER_A, heldStart, heldEnd],
+    );
+    expect(claim.rows[0].claim_booking_slot).toBe(true);
+
+    const moved = await as(
+      "authenticated",
+      OWNER,
+      "update bookings set start_at=$1, end_at=$2 where id=$3",
+      [heldStart, heldEnd, bookingA],
+    );
+    expect(moved.count).toBe(1);
+    const hold = await pg.query<{ active: boolean }>("select active from booking_slot_holds where token_hash=$1", [hash]);
+    expect(hold.rows[0].active).toBe(false);
   });
 
   it("personal kan inte flytta egen bokning till en annan frisör", async () => {

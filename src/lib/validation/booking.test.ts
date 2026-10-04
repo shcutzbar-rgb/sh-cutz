@@ -5,6 +5,7 @@ const valid = {
   serviceId: "00000000-0000-4000-8000-000000000001",
   barberId: "00000000-0000-4000-8000-0000000000b1",
   startAt: "2026-10-12T08:00:00.000Z",
+  holdToken: "00000000-0000-4000-8000-000000000099",
   customerName: "Anna Svensson",
   customerPhone: "072-192 68 49",
   customerEmail: "",
