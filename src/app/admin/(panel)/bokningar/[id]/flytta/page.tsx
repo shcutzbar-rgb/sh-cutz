@@ -6,6 +6,7 @@ import { isMovable } from "@/lib/booking-rules";
 import { dateIn, formatDateLongIn, formatTimeIn, isValidDateString } from "@/lib/datetime";
 import { siteConfig } from "@/lib/site";
 import { requireAdminPage } from "@/server/admin-auth";
+import { restrictBarbers } from "@/lib/barber-access";
 import { getBooking } from "@/server/admin-bookings";
 import { getAvailability } from "@/server/availability";
 import { BookingError } from "@/server/errors";
@@ -34,7 +35,7 @@ export default async function MoveBookingPage({
 
   const barberParam = first(sp.barber);
   const { data: barberRows } = await admin.supabase.from("barbers").select("id,name").eq("is_active", true).order("name");
-  const barbers = (barberRows ?? []) as { id: string; name: string }[];
+  const barbers = restrictBarbers(admin, (barberRows ?? []) as { id: string; name: string }[]);
   const barberId = barbers.some((b) => b.id === barberParam) ? (barberParam as string) : booking.barberId;
 
   let slots: Date[] = [];

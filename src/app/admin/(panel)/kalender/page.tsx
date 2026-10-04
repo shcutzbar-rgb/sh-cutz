@@ -12,6 +12,7 @@ import {
 } from "@/lib/datetime";
 import { siteConfig } from "@/lib/site";
 import { requireAdminPage } from "@/server/admin-auth";
+import { restrictBarbers } from "@/lib/barber-access";
 import { listBookingsBetween, type AdminBooking } from "@/server/admin-bookings";
 
 export const metadata = { title: "Kalender" };
@@ -65,7 +66,7 @@ export default async function CalendarPage({
   const barberParam = first(sp.barber);
 
   const { data: barberRows } = await admin.supabase.from("barbers").select("id,name,is_active").order("name");
-  const allBarbers = (barberRows ?? []) as { id: string; name: string; is_active: boolean }[];
+  const allBarbers = restrictBarbers(admin, (barberRows ?? []) as { id: string; name: string; is_active: boolean }[]);
   const barber = allBarbers.find((b) => b.id === barberParam);
   const shownBarbers = barber ? [barber] : allBarbers.filter((b) => b.is_active);
 

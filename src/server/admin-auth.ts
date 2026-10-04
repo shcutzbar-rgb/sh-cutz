@@ -10,6 +10,8 @@ export type AdminContext = {
   userId: string;
   email: string | null;
   role: AdminRole;
+  /** Personal kan begränsas till en egen frisör (admin_users.barber_id). null = alla. Ägare är aldrig begränsade. */
+  barberId: string | null;
   /** Användarens egen klient: RLS gäller även om koden skulle missa en kontroll. */
   supabase: SupabaseClient;
 };
@@ -76,10 +78,16 @@ export async function resolveAdmin(): Promise<AdminResolution> {
   const user = data.user;
   if (!user) return { status: "anonymous" };
 
-  const { data: row } = await supabase.from("admin_users").select("role").eq("id", user.id).maybeSingle();
+  const { data: row } = await supabase.from("admin_users").select("role,barber_id").eq("id", user.id).maybeSingle();
   if (!row || (row.role !== "owner" && row.role !== "staff")) return { status: "not_admin" };
 
-  const admin: AdminContext = { userId: user.id, email: user.email ?? null, role: row.role, supabase };
+  const admin: AdminContext = {
+    userId: user.id,
+    email: user.email ?? null,
+    role: row.role,
+    barberId: typeof row.barber_id === "string" ? row.barber_id : null,
+    supabase,
+  };
 
   const hasVerifiedTotp = (user.factors ?? []).some((f) => f.factor_type === "totp" && f.status === "verified");
   if (hasVerifiedTotp) {

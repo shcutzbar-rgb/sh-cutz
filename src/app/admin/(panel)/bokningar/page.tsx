@@ -8,6 +8,7 @@ import { formatDateLongIn, formatTimeIn, todayIn } from "@/lib/datetime";
 import { formatPrice } from "@/lib/format";
 import { siteConfig } from "@/lib/site";
 import { requireAdminPage } from "@/server/admin-auth";
+import { restrictBarbers } from "@/lib/barber-access";
 import { listBookings, type AdminBooking, type BookingFilters } from "@/server/admin-bookings";
 import { setBookingStatus } from "./actions";
 
@@ -85,7 +86,7 @@ export default async function BookingsPage({
     listBookings(admin, filters),
     admin.supabase.from("barbers").select("id,name").order("name"),
   ]);
-  const barbers = (barbersRes.data ?? []) as { id: string; name: string }[];
+  const barbers = restrictBarbers(admin, (barbersRes.data ?? []) as { id: string; name: string }[]);
 
   const returnQuery = new URLSearchParams(
     Object.entries({ status: parsed.status, barber: parsed.barber, from: parsed.from, to: parsed.to, q: parsed.q }).filter(

@@ -1,3 +1,4 @@
+import { canAccessBarber } from "@/lib/barber-access";
 import { canChangeStatus, isBookingStatus, isMovable, type BookingStatus } from "@/lib/booking-rules";
 import { dateIn, dayRange, isValidDateString } from "@/lib/datetime";
 import { siteConfig } from "@/lib/site";
@@ -97,6 +98,9 @@ export async function moveBooking(
   const booking = await getBooking(admin, input.bookingId);
   if (!booking) return { ok: false, error: "Bokningen finns inte." };
   if (!isMovable(booking.status)) return { ok: false, error: "Endast väntande och bekräftade bokningar kan flyttas." };
+  if (!canAccessBarber(admin, booking.barberId) || !canAccessBarber(admin, input.barberId)) {
+    return { ok: false, error: "Du kan bara hantera bokningar för din egen frisör." };
+  }
 
   const start = new Date(input.startAt);
   if (Number.isNaN(start.getTime())) return { ok: false, error: "Ogiltig tid." };

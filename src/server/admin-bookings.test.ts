@@ -146,6 +146,23 @@ describe("moveBooking", () => {
     expect(options).toEqual({ excludeBookingId: "b1", adminOverride: true });
   });
 
+  it("nekar personal som är kopplad till en annan frisör, utan att flytta", async () => {
+    state.slots = [new Date(target)];
+    const restricted = { ...admin, barberId: "b1" } as unknown as AdminContext;
+    // Bokningen ligger hos b1 (egen), men målet b2 är en annan frisör.
+    expect(await moveBooking(restricted, { bookingId: "b1", barberId: "b2", startAt: target }, now)).toEqual({
+      ok: false,
+      error: "Du kan bara hantera bokningar för din egen frisör.",
+    });
+    // Egen frisör som mål är tillåtet.
+    expect(await moveBooking(restricted, { bookingId: "b1", barberId: "b1", startAt: target }, now)).toMatchObject({ ok: true });
+    state.updates.length = 0;
+    // Bokning hos annan frisör (om RLS inte redan dolt den) nekas.
+    state.row = row({ barber_id: "b9" });
+    expect(await moveBooking(restricted, { bookingId: "b1", barberId: "b1", startAt: target }, now)).toMatchObject({ ok: false });
+    expect(state.updates).toHaveLength(0);
+  });
+
   it("nekar tid som inte finns bland lediga slots", async () => {
     state.slots = [new Date("2026-10-13T10:00:00.000Z")];
     const result = await moveBooking(admin, { bookingId: "b1", barberId: "b2", startAt: target }, now);

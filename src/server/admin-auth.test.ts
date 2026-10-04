@@ -5,6 +5,7 @@ type Factor = { factor_type: string; status: string };
 const state = vi.hoisted(() => ({
   user: null as { id: string; email: string; factors?: Factor[] } | null,
   role: null as string | null,
+  barberId: null as string | null,
   aal: "aal1" as string | null,
   claimsError: false,
   claimsThrows: false,
@@ -37,7 +38,7 @@ vi.mock("@/lib/supabase-server", () => ({
               if (state.settingsError) return { data: null, error: { message: "db down" } };
               return { data: state.settingsMissing ? null : { require_admin_mfa: state.enforced }, error: null };
             }
-            return { data: state.role ? { role: state.role } : null };
+            return { data: state.role ? { role: state.role, barber_id: state.barberId } : null };
           },
         }),
       }),
@@ -66,6 +67,7 @@ beforeEach(() => {
   Object.assign(state, {
     user: null,
     role: null,
+    barberId: null,
     aal: "aal1",
     claimsError: false,
     claimsThrows: false,
@@ -109,6 +111,17 @@ describe("resolveAdmin", () => {
     const result = await resolveAdmin();
     expect(result.status).toBe("ok");
     if (result.status === "ok") expect(result.admin).toMatchObject({ userId: "u1", role: "staff" });
+  });
+
+  it("läser frisörkopplingen för personal, null som standard", async () => {
+    signedIn("staff");
+    let result = await resolveAdmin();
+    expect(result.status).toBe("ok");
+    if (result.status === "ok") expect(result.admin.barberId).toBeNull();
+    state.barberId = "barber-1";
+    result = await resolveAdmin();
+    expect(result.status).toBe("ok");
+    if (result.status === "ok") expect(result.admin.barberId).toBe("barber-1");
   });
 
   it("behandlar saknad Supabase-konfiguration som anonym", async () => {
