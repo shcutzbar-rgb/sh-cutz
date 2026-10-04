@@ -1,5 +1,7 @@
 // Kontrollerar en körande sajt mot go-live-checklistan i PLAN.md.
 // Användning: npm run check:live -- https://din-domän.se   (standard: http://localhost:3000)
+import { fetchDatabaseReadiness, loadEnv } from "./launch-status.mjs";
+
 const base = new URL(process.argv[2] ?? "http://localhost:3000");
 const origin = base.origin;
 const results = [];
@@ -79,6 +81,16 @@ check(home.text.includes('href="/integritet"'), "Footern länkar till integritet
 
 const gallery = await get("/galleri");
 check(!gallery.text.includes("placeholder-"), "Galleriet visar riktiga bilder", "Galleriet använder fortfarande platshållarbilder (public/gallery/placeholder-*.svg)", "WARN");
+
+// --- Utkast och bekräftelse ---
+const dbEnv = loadEnv();
+if (dbEnv.NEXT_PUBLIC_SUPABASE_URL && dbEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  const readiness = await fetchDatabaseReadiness({ env: dbEnv });
+  check(readiness.blockers.length === 0, "Kontaktuppgifter och öppettider är bekräftade (inga seed-värden)", readiness.blockers.join("\n       "));
+  for (const w of readiness.warnings) add("WARN", w);
+} else {
+  add("WARN", "Bekräftelse av kontaktuppgifter och öppettider kunde inte kontrolleras", "Ange NEXT_PUBLIC_SUPABASE_URL och NEXT_PUBLIC_SUPABASE_ANON_KEY i miljön eller .env.production.local");
+}
 
 // --- Säkerhet ---
 const adminRes = await get("/admin");
