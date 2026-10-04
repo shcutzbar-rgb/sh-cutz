@@ -57,6 +57,10 @@ export const timeOffSchema = z
 
 export const idSchema = z.object({ id: z.uuid() });
 
+export const mfaCodeSchema = z.object({
+  code: z.string().trim().regex(/^\d{6}$/, "Ange den sexsiffriga koden från din autentiseringsapp"),
+});
+
 const coordinate = (limit: number, label: string) =>
   z
     .string()
@@ -79,6 +83,7 @@ export const settingsSchema = z
     cancellationPolicy: z.string().trim().max(2000, "Policytexten är för lång"),
     latitude: coordinate(90, "Latitud"),
     longitude: coordinate(180, "Longitud"),
+    requireAdminMfa: checkbox,
   })
   .refine((v) => (v.latitude === "") === (v.longitude === ""), {
     message: "Ange både latitud och longitud, eller ingen av dem",
