@@ -46,7 +46,7 @@ export function MobileMenu({ links }: { links: readonly NavLink[] }) {
             <li key={link.href} className="border-b border-line last:border-0">
               <Link
                 href={link.href}
-                className={`block py-4 font-display text-xl uppercase tracking-[0.12em] ${
+                className={`block py-4 font-display text-xl tracking-[0.04em] ${
                   pathname === link.href ? "text-accent" : "text-foreground"
                 }`}
                 aria-current={pathname === link.href ? "page" : undefined}

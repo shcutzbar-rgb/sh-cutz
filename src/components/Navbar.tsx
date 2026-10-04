@@ -7,7 +7,7 @@ export function Navbar() {
   return (
     <HeaderShell>
       <nav aria-label="Huvudmeny" className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:h-20">
-        <Link href="/" className="font-display text-2xl font-bold uppercase tracking-[0.12em]">
+        <Link href="/" className="font-display text-2xl font-bold tracking-[0.04em]">
           {siteConfig.name}
           <span aria-hidden className="text-accent">
             .
@@ -19,7 +19,7 @@ export function Navbar() {
             <li key={link.href}>
               <Link
                 href={link.href}
-                className="font-display text-sm uppercase tracking-[0.18em] text-foreground/75 transition-colors hover:text-accent"
+                className="font-display text-sm tracking-[0.04em] text-foreground/75 transition-colors hover:text-accent"
               >
                 {link.label}
               </Link>

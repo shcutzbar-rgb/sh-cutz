@@ -324,7 +324,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                 <div className="mt-4" role="grid" aria-labelledby="day-label">
                   <div role="row" className="grid grid-cols-7 gap-1">
                     {weekdayHeaders.map((weekday) => (
-                      <div key={weekday} role="columnheader" className="py-2 text-center font-display text-xs uppercase tracking-wide text-foreground/55">
+                      <div key={weekday} role="columnheader" className="py-2 text-center font-display text-xs tracking-wide text-foreground/55">
                         {weekday}
                       </div>
                     ))}
@@ -693,7 +693,7 @@ function Stepper({ step }: { step: Step }) {
                 {state === "done" ? "✓" : i + 1}
               </span>
               <span
-                className={`sr-only font-display text-sm uppercase tracking-[0.14em] sm:not-sr-only ${
+                className={`sr-only font-display text-sm tracking-[0.04em] sm:not-sr-only ${
                   state === "todo" ? "text-foreground/50" : "text-foreground"
                 }`}
               >
@@ -770,7 +770,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 function SideRow({ label, value }: { label: string; value?: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-[0.18em] text-foreground/50">{label}</dt>
+      <dt className="text-xs tracking-[0.04em] text-foreground/65">{label}</dt>
       <dd className={value ? "mt-1 font-medium" : "mt-1 text-foreground/40"}>{value ?? "Ej vald"}</dd>
     </div>
   );

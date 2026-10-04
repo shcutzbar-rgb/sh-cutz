@@ -12,7 +12,7 @@ export function OpeningHoursTable({ hours }: { hours: OpeningHours[] }) {
       <tbody className="divide-y divide-line">
         {hours.map((day) => (
           <tr key={day.weekday}>
-            <th scope="row" className="py-3 pr-4 text-left font-display text-base font-medium uppercase tracking-[0.1em]">
+            <th scope="row" className="py-3 pr-4 text-left font-display text-base font-medium tracking-[0.02em]">
               {weekdayNamesSv[day.weekday]}
             </th>
             <td className="py-3 text-right tabular-nums text-foreground/75">

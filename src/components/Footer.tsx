@@ -8,7 +8,7 @@ export function Footer() {
     <footer className="border-t border-line bg-surface pb-24 md:pb-0">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
         <div>
-          <p className="font-display text-3xl font-bold uppercase tracking-[0.12em]">
+          <p className="font-display text-3xl font-bold tracking-[0.04em]">
             {siteConfig.name}
             <span aria-hidden className="text-accent">
               .
