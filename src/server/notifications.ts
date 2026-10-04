@@ -1,5 +1,6 @@
 import { renderBookingCancelled } from "@/emails/booking-cancelled";
 import { renderBookingConfirmation } from "@/emails/booking-confirmation";
+import { renderBookingMoved, type PreviousSlot } from "@/emails/booking-moved";
 import { renderBookingReminder } from "@/emails/booking-reminder";
 import type { EmailBooking } from "@/emails/shared";
 import { sendEmail } from "./email";
@@ -30,6 +31,10 @@ export function sendConfirmationEmail(b: BookingLike, to: string, cancelUrl: str
 
 export function sendReminderEmail(b: BookingLike, to: string): Promise<boolean> {
   return sendEmail(to, renderBookingReminder(toEmailBooking(b)));
+}
+
+export function sendMovedEmail(b: BookingLike, previous: PreviousSlot, to: string): Promise<boolean> {
+  return sendEmail(to, renderBookingMoved(toEmailBooking(b), previous));
 }
 
 export function sendCancelledEmail(b: BookingLike, to: string): Promise<boolean> {

@@ -114,7 +114,7 @@ export default async function MoveBookingPage({
                 ))}
               </ul>
               <p className="mt-3 text-xs text-foreground/60">
-                Att välja en tid flyttar bokningen direkt. Kunden aviseras inte automatiskt; ring eller meddela kunden.
+                Att välja en tid flyttar bokningen direkt. Kunden får ett mejl om den nya tiden om e-post finns; annars behöver du ringa.
               </p>
             </form>
           )}

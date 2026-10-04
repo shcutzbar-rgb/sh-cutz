@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { renderBookingCancelled } from "./booking-cancelled";
 import { renderBookingConfirmation } from "./booking-confirmation";
+import { renderBookingMoved } from "./booking-moved";
 import { renderBookingReminder } from "./booking-reminder";
 import { escapeHtml, type EmailBooking } from "./shared";
 
@@ -37,6 +38,27 @@ describe("e-postmallar", () => {
     }
     expect(renderBookingReminder(booking).subject).toMatch(/påminnelse/i);
     expect(renderBookingCancelled(booking).subject).toMatch(/avbokning/i);
+  });
+
+  it("flyttmejlet visar ny tid, tidigare tid och saknar avbokningslänk", () => {
+    const previous = { startAt: "2026-10-10T07:00:00.000Z", endAt: "2026-10-10T07:30:00.000Z", barberName: "Ali" };
+    const mail = renderBookingMoved(booking, previous);
+    for (const body of [mail.text, mail.html]) {
+      expect(body).toContain("10:00–10:30"); // ny tid
+      expect(body).toContain("09:00–09:30"); // tidigare tid (CEST)
+      expect(body).toContain("hos Ali");
+      expect(body).toContain("Shabir");
+      expect(body).not.toContain("/avboka/");
+    }
+    expect(mail.subject).toMatch(/flyttats/i);
+  });
+
+  it("flyttmejlet escapar namn i HTML", () => {
+    const previous = { startAt: booking.startAt, endAt: booking.endAt, barberName: "<b>Ali</b>" };
+    const mail = renderBookingMoved({ ...booking, customerName: "<i>A</i>" }, previous);
+    expect(mail.html).not.toContain("<i>A</i>");
+    expect(mail.html).not.toContain("<b>Ali</b>");
+    expect(mail.html).toContain("&lt;b&gt;Ali&lt;/b&gt;");
   });
 
   it("escapar kundinmatning i HTML men inte i text", () => {

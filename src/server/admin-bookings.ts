@@ -85,11 +85,15 @@ export async function changeBookingStatus(
 
 const EXCLUSION_VIOLATION = "23P01";
 
+export type MoveResult =
+  | { ok: true; booking: AdminBooking; previous: { startAt: Date; endAt: Date; barberName: string } }
+  | { ok: false; error: string };
+
 export async function moveBooking(
   admin: AdminContext,
   input: { bookingId: string; barberId: string; startAt: string },
   now: Date = new Date(),
-): Promise<ChangeResult> {
+): Promise<MoveResult> {
   const booking = await getBooking(admin, input.bookingId);
   if (!booking) return { ok: false, error: "Bokningen finns inte." };
   if (!isMovable(booking.status)) return { ok: false, error: "Endast väntande och bekräftade bokningar kan flyttas." };
@@ -98,7 +102,7 @@ export async function moveBooking(
   if (Number.isNaN(start.getTime())) return { ok: false, error: "Ogiltig tid." };
 
   // Samma slot-logik som publik bokning, men utan framförhållningskrav och utan att bokningen blockerar sig själv.
-  const { service, slots } = await getAvailability(
+  const { service, barber, slots } = await getAvailability(
     { serviceId: booking.serviceId, barberId: input.barberId, date: dateIn(siteConfig.timezone, start) },
     now,
     { excludeBookingId: booking.id, adminOverride: true },
@@ -124,7 +128,11 @@ export async function moveBooking(
   if (error) return { ok: false, error: "Kunde inte flytta bokningen." };
   if (!data || data.length === 0) return { ok: false, error: "Bokningen kunde inte flyttas (status ändrad)." };
 
-  return { ok: true, booking: { ...booking, startAt: start, endAt: end, barberId: input.barberId } };
+  return {
+    ok: true,
+    booking: { ...booking, startAt: start, endAt: end, barberId: input.barberId, barberName: barber.name },
+    previous: { startAt: booking.startAt, endAt: booking.endAt, barberName: booking.barberName },
+  };
 }
 
 export type BookingFilters = {

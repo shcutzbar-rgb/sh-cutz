@@ -7,7 +7,7 @@ import { BOOKING_STATUSES } from "@/lib/booking-rules";
 import { BookingError } from "@/server/errors";
 import { changeBookingStatus, moveBooking } from "@/server/admin-bookings";
 import { done, fail, firstIssue, formObject, guardAction, safeAdminPath } from "@/server/admin-action";
-import { sendCancelledEmail } from "@/server/notifications";
+import { sendCancelledEmail, sendMovedEmail } from "@/server/notifications";
 
 const LIST = "/admin/bokningar";
 
@@ -64,7 +64,19 @@ export async function moveBookingAction(formData: FormData) {
       startAt: parsed.data.startAt,
     });
     if (!result.ok) fail(back, result.error);
-    message = "Bokningen är flyttad.";
+    const { booking, previous } = result;
+    if (booking.customerEmail) {
+      const email = booking.customerEmail;
+      const prev = {
+        startAt: previous.startAt.toISOString(),
+        endAt: previous.endAt.toISOString(),
+        barberName: previous.barberName,
+      };
+      after(() => sendMovedEmail(booking, prev, email));
+      message = "Bokningen är flyttad och kunden har fått ett mejl.";
+    } else {
+      message = "Bokningen är flyttad. Kunden saknar e-post, kontakta kunden via telefon.";
+    }
   } catch (err) {
     if (err instanceof BookingError) fail(back, err.message);
     throw err;

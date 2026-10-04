@@ -125,9 +125,14 @@ describe("moveBooking", () => {
 
   it("flyttar till ledig tid med samma slot-logik, utan att blockera sig själv", async () => {
     state.slots = [new Date(target)];
+    state.row = row({ barbers: { name: "Ali" } });
     const result = await moveBooking(admin, { bookingId: "b1", barberId: "b2", startAt: target }, now);
 
-    expect(result).toMatchObject({ ok: true, booking: { barberId: "b2" } });
+    expect(result).toMatchObject({
+      ok: true,
+      booking: { barberId: "b2", barberName: "Shabir" },
+      previous: { barberName: "Ali", startAt: new Date("2026-10-12T08:00:00Z") },
+    });
     expect(state.updates).toEqual([
       {
         start_at: target,
