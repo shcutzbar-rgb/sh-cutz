@@ -29,7 +29,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { error } = await searchParams;
   const message = error ? MESSAGES[error] : undefined;
   const inputClass =
-    "mt-1 w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-foreground";
+    "mt-1 w-full min-h-12 rounded-sm border border-line bg-surface px-3 py-2 text-foreground focus:border-accent";
 
   return (
     <section className="mx-auto max-w-sm px-4 py-16">
@@ -65,7 +65,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <Turnstile siteKey={getTurnstileSiteKey()} name="cf-turnstile-response" />
         <button
           type="submit"
-          className="w-full rounded-full bg-accent px-6 py-3 font-semibold text-black hover:bg-accent/90"
+          className="btn btn-primary w-full"
         >
           Logga in
         </button>

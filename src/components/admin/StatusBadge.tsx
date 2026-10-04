@@ -10,7 +10,7 @@ const COLORS: Record<BookingStatus, string> = {
 
 export function StatusBadge({ status }: { status: BookingStatus }) {
   return (
-    <span className={`inline-block rounded-full border px-2 py-0.5 text-xs font-medium ${COLORS[status]}`}>
+    <span className={`inline-block rounded-sm border px-2 py-0.5 text-xs font-medium ${COLORS[status]}`}>
       {STATUS_LABEL[status]}
     </span>
   );

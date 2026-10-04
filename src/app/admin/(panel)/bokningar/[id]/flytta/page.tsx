@@ -107,7 +107,7 @@ export default async function MoveBookingPage({
                       type="submit"
                       name="startAt"
                       value={slot.toISOString()}
-                      className="w-full rounded-lg border border-white/20 px-3 py-2 text-sm font-medium hover:border-accent"
+                      className="w-full min-h-11 rounded-sm border border-line px-3 py-2 text-sm font-medium hover:border-accent"
                     >
                       {formatTimeIn(slot, tz)}
                     </button>

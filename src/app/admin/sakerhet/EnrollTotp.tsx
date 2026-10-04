@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { confirmEnrollment, startEnrollment, type EnrollState } from "./actions";
 
 const primary =
-  "rounded-full bg-accent px-4 py-2 text-sm font-semibold text-black hover:bg-accent/90 disabled:opacity-50";
+  "btn btn-primary btn-sm";
 
 export function EnrollTotp() {
   const [start, startAction, starting] = useActionState<EnrollState>(startEnrollment, { step: "idle" });

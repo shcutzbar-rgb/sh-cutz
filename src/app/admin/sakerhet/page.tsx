@@ -34,7 +34,7 @@ export default async function SecurityPage({
           Till adminpanelen
         </Link>
         <form action={logout}>
-          <button type="submit" className="rounded-full border border-white/20 px-4 py-2 text-sm hover:bg-white/10">
+          <button type="submit" className="btn btn-secondary btn-sm">
             Logga ut
           </button>
         </form>

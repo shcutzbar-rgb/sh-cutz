@@ -30,13 +30,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
         <AdminNav items={items} />
         <form action={logout} className="flex items-center gap-3 text-sm">
           <span className="text-foreground/70">
             {admin.email} ({ROLE_LABEL[admin.role]})
           </span>
-          <button type="submit" className="rounded-full border border-white/20 px-4 py-2 hover:bg-white/10">
+          <button type="submit" className="btn btn-secondary btn-sm">
             Logga ut
           </button>
         </form>

@@ -52,12 +52,12 @@ export default async function MfaLoginPage({ searchParams }: { searchParams: Pro
             maxLength={6}
             required
             autoFocus
-            className="mt-1 w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-lg tracking-widest text-foreground"
+            className="mt-1 w-full min-h-12 rounded-sm border border-line bg-surface px-3 py-2 text-lg tracking-widest text-foreground focus:border-accent"
           />
         </div>
         <button
           type="submit"
-          className="w-full rounded-full bg-accent px-6 py-3 font-semibold text-black hover:bg-accent/90"
+          className="btn btn-primary w-full"
         >
           Verifiera
         </button>
