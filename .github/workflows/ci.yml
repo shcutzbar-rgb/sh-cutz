@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  verify:
+    name: Lint, test, bygg
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Bara för att bygget ska ha en giltig adress; riktig adress sätts vid deploy.
+      NEXT_PUBLIC_SITE_URL: https://example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npx opennextjs-cloudflare build
+
+      # Gratisplanen tillåter 3 MiB (3072 KiB) gzip för workern.
+      - name: Kontrollera workerstorlek
+        run: |
+          npx wrangler deploy --dry-run --outdir .wrangler/dry-run 2>&1 | tee dry-run.log
+          size=$(grep -oP 'gzip: \K[0-9.]+' dry-run.log | tail -n1)
+          echo "Worker gzip: ${size} KiB (gräns 3072 KiB)"
+          test -n "$size"
+          awk -v s="$size" 'BEGIN { exit !(s < 3072) }'
+
+  audit:
+    name: Sårbarheter i produktionsberoenden
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+      - run: npm audit --omit=dev
