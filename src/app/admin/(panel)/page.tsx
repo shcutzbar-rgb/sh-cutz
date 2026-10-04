@@ -6,6 +6,7 @@ import { addDays, dayRange, formatDateLongIn, formatTimeIn, todayIn } from "@/li
 import { siteConfig } from "@/lib/site";
 import { requireAdminPage } from "@/server/admin-auth";
 import { listBookingsBetween, type AdminBooking } from "@/server/admin-bookings";
+import { getLaunchReadiness } from "@/server/launch-readiness";
 
 const STATS_DAYS = 90;
 
@@ -45,7 +46,7 @@ export default async function AdminDashboard({
   const upcomingEnd = dayRange(addDays(today, 7), tz).end;
   const statsStart = new Date(now.getTime() - STATS_DAYS * 86_400_000);
 
-  const [todayAll, upcomingAll, statsRes] = await Promise.all([
+  const [todayAll, upcomingAll, statsRes, readiness] = await Promise.all([
     listBookingsBetween(admin, todayRange.start, todayRange.end),
     listBookingsBetween(admin, todayRange.end, upcomingEnd),
     admin.supabase
@@ -54,6 +55,7 @@ export default async function AdminDashboard({
       .gte("start_at", statsStart.toISOString())
       .lt("start_at", now.toISOString())
       .limit(5000),
+    getLaunchReadiness(admin),
   ]);
 
   const todayBookings = todayAll.filter((b) => b.status !== "cancelled");
@@ -64,6 +66,29 @@ export default async function AdminDashboard({
     <>
       <Flash ok={first(sp.ok)} error={first(sp.error)} denied={first(sp.denied) === "1"} />
       <h1 className="text-2xl font-bold tracking-tight">Översikt</h1>
+
+      {readiness.length > 0 && (
+        <section aria-labelledby="readiness-heading" className="mt-4 rounded-xl border border-yellow-400/40 p-4 text-sm">
+          <h2 id="readiness-heading" className="font-semibold text-yellow-300">
+            Kvar innan sajten kan gå live
+          </h2>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-foreground/80">
+            {readiness.map((issue) => (
+              <li key={issue.id}>
+                {issue.message}
+                {issue.level === "warning" ? " (rekommenderas)" : ""}
+              </li>
+            ))}
+          </ul>
+          {admin.role === "owner" && (
+            <p className="mt-2">
+              <Link href="/admin/installningar" className="text-accent underline underline-offset-4">
+                Till Inställningar
+              </Link>
+            </p>
+          )}
+        </section>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <section className={`${ui.card} lg:col-span-2`} aria-labelledby="today-heading">

@@ -2,6 +2,10 @@ import { weekdayNamesSv } from "@/lib/hours";
 import type { OpeningHours } from "@/types/shop";
 
 export function OpeningHoursTable({ hours }: { hours: OpeningHours[] }) {
+  if (hours.length === 0) {
+    return <p className="text-sm text-foreground/70">Öppettider meddelas separat. Kontakta oss för aktuella tider.</p>;
+  }
+
   return (
     <table className="w-full text-sm">
       <caption className="sr-only">Öppettider</caption>

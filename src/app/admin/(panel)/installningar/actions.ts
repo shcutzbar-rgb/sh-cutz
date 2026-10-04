@@ -12,6 +12,14 @@ export async function saveSettings(formData: FormData) {
   if (!parsed.success) fail(PATH, firstIssue(parsed.error));
 
   const v = parsed.data;
+
+  // Behåll ursprunglig bekräftelsetid så länge rutan är ikryssad; avkryssning gör uppgifterna obekräftade igen.
+  const { data: existing } = await admin.supabase
+    .from("shop_settings")
+    .select("contact_confirmed_at,hours_confirmed_at")
+    .eq("id", 1)
+    .maybeSingle();
+  const now = new Date().toISOString();
   const { error } = await admin.supabase.from("shop_settings").upsert({
     id: 1,
     shop_name: v.shopName,
@@ -25,6 +33,8 @@ export async function saveSettings(formData: FormData) {
     latitude: v.latitude === "" ? null : Number(v.latitude),
     longitude: v.longitude === "" ? null : Number(v.longitude),
     require_admin_mfa: v.requireAdminMfa,
+    contact_confirmed_at: v.contactConfirmed ? (existing?.contact_confirmed_at ?? now) : null,
+    hours_confirmed_at: v.hoursConfirmed ? (existing?.hours_confirmed_at ?? now) : null,
   });
   if (error) fail(PATH, dbErrorMessage(error));
 

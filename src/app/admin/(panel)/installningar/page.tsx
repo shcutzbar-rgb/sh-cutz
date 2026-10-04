@@ -19,7 +19,7 @@ export default async function SettingsPage({
 
   const { data: s } = await admin.supabase
     .from("shop_settings")
-    .select("shop_name,phone,email,address_line,city,postal_code,booking_interval_minutes,cancellation_policy,latitude,longitude,require_admin_mfa")
+    .select("shop_name,phone,email,address_line,city,postal_code,booking_interval_minutes,cancellation_policy,latitude,longitude,require_admin_mfa,contact_confirmed_at,hours_confirmed_at")
     .eq("id", 1)
     .maybeSingle();
   const hours = await getOpeningHours();
@@ -107,6 +107,31 @@ export default async function SettingsPage({
             Kunder kan avboka själva fram till {BOOKING_CONFIG.cancelDeadlineMinutes / 60} timmar före tiden. Ändra gränsen i koden (booking-config).
           </p>
         </div>
+        <fieldset className="space-y-3 rounded-lg border border-white/10 p-4 sm:col-span-2">
+          <legend className="px-1 text-sm font-medium">Bekräftelse inför launch</legend>
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              name="contactConfirmed"
+              defaultChecked={Boolean(s?.contact_confirmed_at)}
+              className="mt-1 h-5 w-5 shrink-0 accent-[#d4af37]"
+            />
+            <span>Jag har kontrollerat att kontaktuppgifterna ovan (telefon, adress, ort) stämmer.</span>
+          </label>
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              name="hoursConfirmed"
+              defaultChecked={Boolean(s?.hours_confirmed_at)}
+              className="mt-1 h-5 w-5 shrink-0 accent-[#d4af37]"
+            />
+            <span>Jag har kontrollerat att öppettiderna (se nedan) stämmer.</span>
+          </label>
+          <p className="text-xs text-foreground/60">
+            Utan bekräftelse stoppar <code>npm run deploy</code> och <code>npm run check:live</code> flaggar att sajten
+            fortfarande kan innehålla utkastvärden.
+          </p>
+        </fieldset>
         <div className="sm:col-span-2">
           <label className="flex items-start gap-3 text-sm">
             <input

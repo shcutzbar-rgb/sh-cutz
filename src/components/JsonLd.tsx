@@ -5,6 +5,14 @@ import type { OpeningHours, Service } from "@/types/shop";
 
 export function buildHairSalonJsonLd(services: Service[], openingHours: OpeningHours[], shop: ShopSettings) {
   const prices = services.map((s) => s.priceSek);
+  const specs = openingHours
+    .filter((h) => h.opens && h.closes)
+    .map((h) => ({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: weekdayNamesSchema[h.weekday],
+      opens: h.opens,
+      closes: h.closes,
+    }));
 
   return {
     "@context": "https://schema.org",
@@ -26,14 +34,7 @@ export function buildHairSalonJsonLd(services: Service[], openingHours: OpeningH
     ...(shop.latitude !== null && shop.longitude !== null
       ? { geo: { "@type": "GeoCoordinates", latitude: shop.latitude, longitude: shop.longitude } }
       : {}),
-    openingHoursSpecification: openingHours
-      .filter((h) => h.opens && h.closes)
-      .map((h) => ({
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: weekdayNamesSchema[h.weekday],
-        opens: h.opens,
-        closes: h.closes,
-      })),
+    ...(specs.length > 0 ? { openingHoursSpecification: specs } : {}),
   };
 }
 

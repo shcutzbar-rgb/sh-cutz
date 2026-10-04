@@ -84,6 +84,8 @@ export const settingsSchema = z
     latitude: coordinate(90, "Latitud"),
     longitude: coordinate(180, "Longitud"),
     requireAdminMfa: checkbox,
+    contactConfirmed: checkbox,
+    hoursConfirmed: checkbox,
   })
   .refine((v) => (v.latitude === "") === (v.longitude === ""), {
     message: "Ange både latitud och longitud, eller ingen av dem",

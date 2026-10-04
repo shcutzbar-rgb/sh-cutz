@@ -1,16 +1,8 @@
 import { createAnonClient, isSupabaseConfigured } from "@/lib/supabase";
 import type { OpeningHours } from "@/types/shop";
 
-// Fallback när databasen saknas eller saknar arbetstider. UTKAST: verifiera med kunden.
-export const staticOpeningHours: OpeningHours[] = [
-  { weekday: 1, opens: "10:00", closes: "19:00" },
-  { weekday: 2, opens: "10:00", closes: "19:00" },
-  { weekday: 3, opens: "10:00", closes: "19:00" },
-  { weekday: 4, opens: "10:00", closes: "19:00" },
-  { weekday: 5, opens: "10:00", closes: "19:00" },
-  { weekday: 6, opens: "10:00", closes: "17:00" },
-  { weekday: 0, opens: null, closes: null },
-];
+// Inga påhittade fallback-öppettider: saknas databasen eller arbetstider returneras en tom lista
+// och sajten visar att öppettider meddelas separat i stället för falska tider.
 
 export const weekdayNamesSv = ["Söndag", "Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag"];
 export const weekdayNamesSchema = [
@@ -52,5 +44,5 @@ export async function getOpeningHours(): Promise<OpeningHours[]> {
       console.error("Kunde inte läsa working_hours:", err);
     }
   }
-  return staticOpeningHours;
+  return [];
 }
