@@ -36,5 +36,7 @@ export async function login(formData: FormData) {
     redirect("/admin/login?error=invalid");
   }
 
-  redirect("/admin");
+  // Faktorlistan kommer från Auth-serverns svar, inte från cookien.
+  const needsMfa = (data.user.factors ?? []).some((f) => f.factor_type === "totp" && f.status === "verified");
+  redirect(needsMfa ? "/admin/login/mfa" : "/admin");
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Turnstile } from "@/components/Turnstile";
 import { getTurnstileSiteKey } from "@/lib/turnstile";
-import { resolveAdmin } from "@/server/admin-auth";
+import { MFA_LOGIN_PATH, MFA_SETUP_PATH, resolveAdmin } from "@/server/admin-auth";
 import { login } from "./actions";
 
 export const metadata: Metadata = {
@@ -21,7 +21,10 @@ const MESSAGES: Record<string, string> = {
 };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  if ((await resolveAdmin()).status === "ok") redirect("/admin");
+  const resolved = await resolveAdmin();
+  if (resolved.status === "ok") redirect("/admin");
+  if (resolved.status === "mfa_required") redirect(MFA_LOGIN_PATH);
+  if (resolved.status === "mfa_enrollment_required") redirect(MFA_SETUP_PATH);
 
   const { error } = await searchParams;
   const message = error ? MESSAGES[error] : undefined;
