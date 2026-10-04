@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createBookingSchema } from "@/lib/validation/booking";
 import { createBooking } from "@/server/bookings";
 import { BookingError } from "@/server/errors";
+import { reportError } from "@/server/report";
 import { sendConfirmationEmail } from "@/server/notifications";
 import { clientIp, isRateLimited, isSameOrigin } from "@/server/request-guards";
 import { CAPTCHA_ERROR, verifyTurnstile } from "@/server/turnstile";
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     if (err instanceof BookingError) {
       return NextResponse.json({ error: err.message, code: err.code }, { status: err.status, headers: NO_STORE });
     }
-    console.error(err);
+    reportError(err, { route: "/api/bookings" });
     return NextResponse.json({ error: "Något gick fel." }, { status: 500, headers: NO_STORE });
   }
 }

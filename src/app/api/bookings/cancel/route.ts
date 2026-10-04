@@ -4,6 +4,7 @@ import { isValidCancelToken } from "@/lib/booking-rules";
 import { siteConfig } from "@/lib/site";
 import { cancelBookingByToken } from "@/server/cancellation";
 import { BookingError } from "@/server/errors";
+import { reportError } from "@/server/report";
 import { sendCancelledEmail } from "@/server/notifications";
 import { clientIp, isRateLimited, isSameOrigin } from "@/server/request-guards";
 import { CAPTCHA_ERROR, verifyTurnstile } from "@/server/turnstile";
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
     if (err instanceof BookingError) {
       return NextResponse.json({ error: err.message }, { status: err.status, headers: NO_STORE });
     }
-    console.error(err);
+    reportError(err, { route: "/api/bookings/cancel" });
     return NextResponse.json({ error: "Något gick fel." }, { status: 500, headers: NO_STORE });
   }
 }

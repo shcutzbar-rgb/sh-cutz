@@ -12,6 +12,8 @@
 	"main": "worker.ts",
 	"compatibility_date": "2026-09-26",
 	"compatibility_flags": [
+		// Node.js API (krävs av OpenNext och Sentry)
+		"nodejs_compat",
 		"global_fetch_strictly_public"
 	],
 	"assets": {

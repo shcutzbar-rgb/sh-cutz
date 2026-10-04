@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { availabilityQuerySchema } from "@/lib/validation/booking";
 import { getAvailability } from "@/server/availability";
 import { BookingError } from "@/server/errors";
+import { reportError } from "@/server/report";
 import { clientIp, isRateLimited } from "@/server/request-guards";
 
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
     if (err instanceof BookingError) {
       return NextResponse.json({ error: err.message }, { status: err.status, headers: NO_STORE });
     }
-    console.error(err);
+    reportError(err, { route: "/api/availability" });
     return NextResponse.json({ error: "Något gick fel." }, { status: 500, headers: NO_STORE });
   }
 }

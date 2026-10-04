@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { BookingError } from "@/server/errors";
+import { reportError } from "@/server/report";
 import { isAuthorizedCron } from "@/server/cron-auth";
 import { sendDueReminders } from "@/server/reminders";
 import { anonymizeOldBookings } from "@/server/retention";
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     if (err instanceof BookingError) {
       return NextResponse.json({ error: err.message }, { status: err.status, headers: NO_STORE });
     }
-    console.error(err);
+    reportError(err, { route: "/api/cron/reminders" });
     return NextResponse.json({ error: "Något gick fel." }, { status: 500, headers: NO_STORE });
   }
 }

@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase";
 import { BookingError } from "./errors";
+import { reportError } from "./report";
 
 export const UNAVAILABLE_MESSAGE = "Bokning är tillfälligt otillgänglig.";
 
@@ -12,7 +13,7 @@ export function db() {
 
 export function failOnError(error: { message: string } | null) {
   if (error) {
-    console.error("Databasfel:", error.message);
+    reportError(new Error(`Databasfel: ${error.message}`), { source: "database" });
     throw new BookingError("unavailable", UNAVAILABLE_MESSAGE, 503);
   }
 }
