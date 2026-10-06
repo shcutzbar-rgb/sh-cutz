@@ -49,7 +49,7 @@ export default async function Home() {
         {heroImage && (
           <>
             <Image src={heroImage.src} alt={heroImage.alt} fill priority sizes="100vw" className="-z-20 object-cover" />
-            <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/70 to-background/40" />
+            <div aria-hidden className="absolute inset-0 -z-10 bg-linear-to-t from-background via-background/70 to-background/40" />
           </>
         )}
         {!heroImage && (
@@ -148,7 +148,7 @@ export default async function Home() {
           </div>
           <ul className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
             {galleryImages.slice(0, 4).map((image) => (
-              <li key={image.id} className="reveal aspect-[4/5] overflow-hidden rounded-sm border border-line bg-surface">
+              <li key={image.id} className="reveal aspect-4/5 overflow-hidden rounded-sm border border-line bg-surface">
                 <Image
                   src={image.src}
                   alt={image.alt}

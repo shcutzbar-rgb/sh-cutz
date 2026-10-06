@@ -25,16 +25,16 @@ export function MobileMenu({ links }: { links: readonly NavLink[] }) {
         aria-controls="mobile-menu"
         aria-label={open ? "Stäng meny" : "Öppna meny"}
         onClick={() => setOpenPath(open ? null : pathname)}
-        className="flex h-11 w-11 flex-col items-center justify-center gap-[5px] rounded-sm border border-line"
+        className="flex h-11 w-11 flex-col items-center justify-center gap-1.25 rounded-sm border border-line"
       >
         <span
           aria-hidden
-          className={`h-px w-5 bg-foreground transition-transform duration-200 ${open ? "translate-y-[6px] rotate-45" : ""}`}
+          className={`h-px w-5 bg-foreground transition-transform duration-200 ${open ? "translate-y-1.5 rotate-45" : ""}`}
         />
         <span aria-hidden className={`h-px w-5 bg-foreground transition-opacity duration-200 ${open ? "opacity-0" : ""}`} />
         <span
           aria-hidden
-          className={`h-px w-5 bg-foreground transition-transform duration-200 ${open ? "-translate-y-[6px] -rotate-45" : ""}`}
+          className={`h-px w-5 bg-foreground transition-transform duration-200 ${open ? "-translate-y-1.5 -rotate-45" : ""}`}
         />
       </button>
       {open && (

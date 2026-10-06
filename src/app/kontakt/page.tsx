@@ -84,13 +84,13 @@ export default async function KontaktPage() {
           </Link>
         </div>
 
-        <div className="aspect-square overflow-hidden rounded-sm border border-line md:sticky md:top-28 md:aspect-auto md:h-[36rem]">
+        <div className="aspect-square overflow-hidden rounded-sm border border-line md:sticky md:top-28 md:aspect-auto md:h-144">
           <iframe
             title={`Karta över ${shop.shopName}, ${shop.addressLine}`}
             src={`https://www.google.com/maps?q=${query}&output=embed`}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            className="h-full w-full border-0 [filter:invert(0.9)_hue-rotate(180deg)_grayscale(0.4)]"
+            className="h-full w-full border-0 filter-[invert(0.9)_hue-rotate(180deg)_grayscale(0.4)]"
           />
         </div>
       </div>

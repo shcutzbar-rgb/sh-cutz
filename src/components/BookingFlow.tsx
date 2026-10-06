@@ -290,7 +290,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                         setStep("barber");
                       }}
                       className={`card flex w-full items-start justify-between gap-4 p-5 text-left ${
-                        service?.id === s.id ? "!border-accent" : ""
+                        service?.id === s.id ? "border-accent!" : ""
                       }`}
                     >
                       <span>
@@ -327,7 +327,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                         void loadSlots(first, service, b);
                       }}
                       className={`card flex w-full items-center gap-4 p-5 text-left ${
-                        barber?.id === b.id ? "!border-accent" : ""
+                        barber?.id === b.id ? "border-accent!" : ""
                       }`}
                     >
                       <BarberAvatar name={b.name} photoUrl={b.photoUrl} />
@@ -523,7 +523,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                   />
                 </Field>
 
-                <Field id="customerPhone" label="Telefon" optional hint="Valfritt" error={errors.customerPhone?.message}>
+                <Field id="customerPhone" label="Telefon" optional error={errors.customerPhone?.message}>
                   <input
                     id="customerPhone"
                     type="tel"
@@ -567,7 +567,7 @@ export function BookingFlow({ services, barbers, timezone, minDate, maxDate, add
                 </Field>
 
                 {/* Honeypot: dold för människor och skärmläsare */}
-                <div aria-hidden className="absolute -left-[9999px]">
+                <div aria-hidden className="absolute left-[-9999px]">
                   <label htmlFor="website">Webbplats</label>
                   <input id="website" name="website" tabIndex={-1} autoComplete="off" defaultValue="" />
                 </div>
