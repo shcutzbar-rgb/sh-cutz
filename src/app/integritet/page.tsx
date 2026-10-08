@@ -41,7 +41,7 @@ export default async function IntegritetPage() {
 
       <h2 className={h2}>Vilka uppgifter sparas</h2>
       <p className={p}>
-        Vid bokning sparar vi ditt namn, telefonnummer, e-postadress (om du anger den), eventuellt meddelande samt vald
+        Vid bokning sparar vi ditt namn, e-postadress, telefonnummer (om du anger det), eventuellt meddelande samt vald
         tjänst, frisör och tid. Avbokningslänken lagras enbart som en envägshash.
       </p>
 
@@ -64,7 +64,7 @@ export default async function IntegritetPage() {
       <ul className="mt-2 list-disc space-y-1 pl-6 text-foreground/70">
         <li>Supabase: databas för bokningar.</li>
         <li>Cloudflare: drift av webbplatsen och bot-skydd (Turnstile) på bokning, avbokning och inloggning.</li>
-        <li>Resend: utskick av bekräftelse och påminnelse, om du angett e-post.</li>
+        <li>Brevo: utskick av bokningsbekräftelse, avbokningsbesked och påminnelse till e-postadressen du anger.</li>
       </ul>
       <p className={p}>
         Vissa leverantörer kan behandla uppgifter utanför EU/EES. Kontakta oss om du vill veta mer. Vi säljer inte dina

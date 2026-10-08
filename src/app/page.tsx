@@ -18,7 +18,7 @@ export const metadata = pageMetadata({
   title: "SH-Cutz – Barberare på Södermalm, Stockholm",
   absoluteTitle: true,
   description:
-    "Boka fade och skäggtrim hos SH-Cutz, barbershop på Folkungagatan 87 på Södermalm i Stockholm. Tydliga priser och enkel onlinebokning.",
+    "Boka fade och skäggtrim hos SH-Cutz på Södermalm i Stockholm. Se tjänster, priser och lediga tider online.",
   path: "/",
 });
 

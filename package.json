@@ -10,6 +10,7 @@
     "test": "vitest run",
     "verify": "npm run lint && npm test && npm run build",
     "check:live": "node scripts/check-live.mjs",
+    "email:test": "node scripts/test-brevo-email.mjs",
     "check:launch": "node scripts/check-launch-ready.mjs",
     "predeploy": "npm run check:launch",
     "preupload": "npm run check:launch",
@@ -20,6 +21,7 @@
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",
+    "@getbrevo/brevo": "^6.0.3",
     "@hookform/resolvers": "^5.9.1",
     "@opennextjs/cloudflare": "^1.20.3",
     "@sentry/cloudflare": "^11.4.0",
@@ -30,7 +32,7 @@
     "react": "^19.1.7",
     "react-dom": "^19.1.7",
     "react-hook-form": "^7.89.0",
-    "resend": "^6.32.0",
+    "three": "^0.186.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -40,6 +42,7 @@
     "@types/node": "^22.20.5",
     "@types/react": "^19.1.7",
     "@types/react-dom": "^19.1.7",
+    "@types/three": "^0.186.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",

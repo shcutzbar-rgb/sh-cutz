@@ -34,8 +34,9 @@ export function looksLikeSeedHours(rows) {
 
 async function rest(env, fetchImpl, table, query) {
   const base = env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, "");
+  const publishableKey = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const res = await fetchImpl(`${base}/rest/v1/${table}?${query}`, {
-    headers: { apikey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY, Authorization: `Bearer ${env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` },
+    headers: { apikey: publishableKey, Authorization: `Bearer ${publishableKey}` },
   });
   if (!res.ok) throw new Error(`${table}: HTTP ${res.status}`);
   return res.json();
@@ -46,8 +47,8 @@ export async function fetchDatabaseReadiness({ env = process.env, fetchImpl = fe
   const blockers = [];
   const warnings = [];
 
-  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    blockers.push("NEXT_PUBLIC_SUPABASE_URL och NEXT_PUBLIC_SUPABASE_ANON_KEY saknas, så uppgifterna kan inte verifieras.");
+  if (!env.NEXT_PUBLIC_SUPABASE_URL || !(env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
+    blockers.push("NEXT_PUBLIC_SUPABASE_URL och NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY saknas, så uppgifterna kan inte verifieras.");
     return { blockers, warnings };
   }
 

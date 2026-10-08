@@ -3,6 +3,8 @@ import { renderBookingConfirmation } from "@/emails/booking-confirmation";
 import { renderBookingMoved, type PreviousSlot } from "@/emails/booking-moved";
 import { renderBookingReminder } from "@/emails/booking-reminder";
 import type { EmailBooking } from "@/emails/shared";
+import { getShopSettings } from "@/lib/shop-settings";
+import { siteConfig } from "@/lib/site";
 import { sendEmail } from "./email";
 
 type BookingLike = {
@@ -14,7 +16,8 @@ type BookingLike = {
   priceSek: number;
 };
 
-function toEmailBooking(b: BookingLike): EmailBooking {
+async function toEmailBooking(b: BookingLike): Promise<EmailBooking> {
+  const shop = await getShopSettings();
   return {
     customerName: b.customerName,
     serviceName: b.serviceName,
@@ -22,21 +25,25 @@ function toEmailBooking(b: BookingLike): EmailBooking {
     startAt: new Date(b.startAt).toISOString(),
     endAt: new Date(b.endAt).toISOString(),
     priceSek: b.priceSek,
+    shopName: shop.shopName,
+    shopAddress: `${shop.addressLine}, ${shop.postalCode ? `${shop.postalCode} ` : ""}${shop.city}`,
+    shopPhone: shop.phone,
+    bookingUrl: siteConfig.url,
   };
 }
 
-export function sendConfirmationEmail(b: BookingLike, to: string, cancelUrl: string): Promise<boolean> {
-  return sendEmail(to, renderBookingConfirmation(toEmailBooking(b), cancelUrl));
+export async function sendConfirmationEmail(b: BookingLike, to: string, cancelUrl: string): Promise<boolean> {
+  return sendEmail(to, renderBookingConfirmation(await toEmailBooking(b), cancelUrl));
 }
 
-export function sendReminderEmail(b: BookingLike, to: string): Promise<boolean> {
-  return sendEmail(to, renderBookingReminder(toEmailBooking(b)));
+export async function sendReminderEmail(b: BookingLike, to: string): Promise<boolean> {
+  return sendEmail(to, renderBookingReminder(await toEmailBooking(b)));
 }
 
-export function sendMovedEmail(b: BookingLike, previous: PreviousSlot, to: string): Promise<boolean> {
-  return sendEmail(to, renderBookingMoved(toEmailBooking(b), previous));
+export async function sendMovedEmail(b: BookingLike, previous: PreviousSlot, to: string): Promise<boolean> {
+  return sendEmail(to, renderBookingMoved(await toEmailBooking(b), previous));
 }
 
-export function sendCancelledEmail(b: BookingLike, to: string): Promise<boolean> {
-  return sendEmail(to, renderBookingCancelled(toEmailBooking(b)));
+export async function sendCancelledEmail(b: BookingLike, to: string): Promise<boolean> {
+  return sendEmail(to, renderBookingCancelled(await toEmailBooking(b)));
 }

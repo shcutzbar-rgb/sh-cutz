@@ -41,6 +41,19 @@ describe("looksLikeSeedHours", () => {
 });
 
 describe("fetchDatabaseReadiness", () => {
+  it("använder den nya publishable-nyckeln vid kontroll mot Supabase", async () => {
+    const requests = [];
+    const result = await fetchDatabaseReadiness({
+      env: { NEXT_PUBLIC_SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test" },
+      fetchImpl: async (url, options) => {
+        requests.push(options.headers);
+        return fakeFetch({ shop_settings: [settings()], working_hours: [{ weekday: 1, start_time: "09:00:00", end_time: "18:00:00" }] })(url);
+      },
+    });
+    expect(result).toEqual({ blockers: [], warnings: [] });
+    expect(requests[0]).toMatchObject({ apikey: "sb_publishable_test", Authorization: "Bearer sb_publishable_test" });
+  });
+
   it("godkänner bekräftade uppgifter och arbetstider", async () => {
     const result = await fetchDatabaseReadiness({
       env,

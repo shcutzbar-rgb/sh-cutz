@@ -7,22 +7,29 @@ function requireEnv(name: string): string {
 }
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-}
-
-/** Klient med anon-nyckel (respekterar RLS). */
-export function createAnonClient() {
-  return createClient(
-    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
   );
 }
 
-/** Endast serverkod: service role kringgår RLS och får aldrig nå klienten. */
-export function createServiceClient() {
+/** Client key is public and remains subject to RLS. */
+export function createAnonClient() {
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!key) throw new Error("Saknar miljövariabel: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
   return createClient(
     requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
+    key,
+  );
+}
+
+/** Server-only key bypasses RLS and must never reach client code. */
+export function createServiceClient() {
+  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) throw new Error("Saknar miljövariabel: SUPABASE_SECRET_KEY");
+  return createClient(
+    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    key,
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 }

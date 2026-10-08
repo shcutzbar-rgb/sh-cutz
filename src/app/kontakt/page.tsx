@@ -8,7 +8,7 @@ import { siteConfig } from "@/lib/site";
 
 export const metadata = pageMetadata({
   title: "Kontakt",
-  description: `Hitta till SH-Cutz på ${siteConfig.address.street}, ${siteConfig.address.area}. Ring ${siteConfig.phone} eller boka online.`,
+  description: "Kontakta SH-Cutz på Södermalm i Stockholm. Se aktuell adress och telefon eller boka tid online.",
   path: "/kontakt",
 });
 

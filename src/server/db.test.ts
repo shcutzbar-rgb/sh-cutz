@@ -12,6 +12,7 @@ describe("db", () => {
 
   it("returns a useful configuration error when server Supabase credentials are missing", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    vi.stubEnv("SUPABASE_SECRET_KEY", "");
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
 
     expect(() => db()).toThrowError(

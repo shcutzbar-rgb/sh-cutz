@@ -84,12 +84,12 @@ check(!gallery.text.includes("placeholder-"), "Galleriet visar riktiga bilder", 
 
 // --- Utkast och bekräftelse ---
 const dbEnv = loadEnv();
-if (dbEnv.NEXT_PUBLIC_SUPABASE_URL && dbEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+if (dbEnv.NEXT_PUBLIC_SUPABASE_URL && (dbEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || dbEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
   const readiness = await fetchDatabaseReadiness({ env: dbEnv });
   check(readiness.blockers.length === 0, "Kontaktuppgifter och öppettider är bekräftade (inga seed-värden)", readiness.blockers.join("\n       "));
   for (const w of readiness.warnings) add("WARN", w);
 } else {
-  add("WARN", "Bekräftelse av kontaktuppgifter och öppettider kunde inte kontrolleras", "Ange NEXT_PUBLIC_SUPABASE_URL och NEXT_PUBLIC_SUPABASE_ANON_KEY i miljön eller .env.production.local");
+  add("WARN", "Bekräftelse av kontaktuppgifter och öppettider kunde inte kontrolleras", "Ange NEXT_PUBLIC_SUPABASE_URL och NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY i miljön eller .env.production.local");
 }
 
 // --- Säkerhet ---

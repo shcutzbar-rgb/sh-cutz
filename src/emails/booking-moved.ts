@@ -11,12 +11,14 @@ function previousLine(previous: PreviousSlot): string {
 
 /** Mejl till kunden när admin flyttat en bokning. `booking` är den nya tiden. */
 export function renderBookingMoved(booking: EmailBooking, previous: PreviousSlot): RenderedEmail {
+  const shopName = booking.shopName || siteConfig.name;
+  const bookingUrl = booking.bookingUrl || siteConfig.url;
   const before = `Tidigare tid: ${previousLine(previous)}`;
-  const note = `Passar inte den nya tiden? Ring ${siteConfig.phone} eller boka en ny tid på ${siteConfig.url}/boka.`;
+  const note = `Passar inte den nya tiden? Ring ${booking.shopPhone || siteConfig.phone} eller boka en ny tid på ${bookingUrl}/boka.`;
 
   const text = `Hej ${booking.customerName}!
 
-Din tid hos ${siteConfig.name} har flyttats. Detta är din nya tid:
+Din tid hos ${shopName} har flyttats. Detta är din nya tid:
 
 ${detailsText(booking)}
 
@@ -24,16 +26,17 @@ ${before}
 
 ${note}
 
-${footerText()}`;
+${footerText(booking)}`;
 
   const html = layoutHtml(
     "Din tid har flyttats",
     `<p>Hej ${escapeHtml(booking.customerName)}!</p>
-<p>Din tid hos ${escapeHtml(siteConfig.name)} har flyttats. Detta är din nya tid:</p>
+<p>Din tid hos ${escapeHtml(shopName)} har flyttats. Detta är din nya tid:</p>
 ${detailsHtml(booking)}
 <p style="color:#666">${escapeHtml(before)}</p>
 <p>${escapeHtml(note)}</p>`,
+    booking,
   );
 
-  return { subject: `Din tid har flyttats – ${siteConfig.name}`, text, html };
+  return { subject: `Din tid har flyttats – ${shopName}`, text, html };
 }

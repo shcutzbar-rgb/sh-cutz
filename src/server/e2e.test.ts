@@ -167,6 +167,7 @@ describe("tillgänglighet och bokning", () => {
   });
 
   it("reserverar valt datum för första kunden medan hen fyller i formuläret", async () => {
+    const holdNow = new Date();
     const firstCustomer = input(at("08:00"), { holdToken: "00000000-0000-4000-8000-000000000101" });
     const secondCustomer = input(at("08:00"), { holdToken: "00000000-0000-4000-8000-000000000102" });
     await claimSlotHold({
@@ -174,7 +175,7 @@ describe("tillgänglighet och bokning", () => {
       barberId: BARBER,
       startAt: firstCustomer.startAt,
       holdToken: firstCustomer.holdToken,
-    }, NOW);
+    }, holdNow);
 
     await expect(slotsAt()).resolves.not.toContain(at("08:00"));
     await expect(claimSlotHold({
@@ -182,15 +183,16 @@ describe("tillgänglighet och bokning", () => {
       barberId: BARBER,
       startAt: secondCustomer.startAt,
       holdToken: secondCustomer.holdToken,
-    }, NOW)).rejects.toMatchObject({ code: "slot_unavailable", status: 409 });
+    }, holdNow)).rejects.toMatchObject({ code: "slot_unavailable", status: 409 });
 
     await expect(createBooking(firstCustomer, NOW)).resolves.toBeDefined();
     expect(await rows()).toHaveLength(1);
   });
 
   it("ger bara en av två samtidiga kunder en reservation för samma tid", async () => {
+    const holdNow = new Date();
     const claims = ["00000000-0000-4000-8000-000000000111", "00000000-0000-4000-8000-000000000112"].map((holdToken) =>
-      claimSlotHold({ serviceId: SERVICE, barberId: BARBER, startAt: at("08:00"), holdToken }, NOW),
+      claimSlotHold({ serviceId: SERVICE, barberId: BARBER, startAt: at("08:00"), holdToken }, holdNow),
     );
     const result = await Promise.allSettled(claims);
     expect(result.filter((entry) => entry.status === "fulfilled")).toHaveLength(1);

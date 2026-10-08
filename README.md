@@ -38,6 +38,8 @@ Utan Supabase-variabler visar sajten statisk data, men bokning kräver databasen
 2. Kör filerna i `supabase/migrations/` i ordning, antingen i Supabase SQL Editor eller med Supabase CLI (`supabase link` och `supabase db push`). De skapar tabeller, RLS-policies och seed för tjänster, frisör och arbetstider. Migrationen `20261004100000_daily_hours_10_20.sql` sätter befintliga aktiva frisörer till 10:00-20:00 alla dagar.
 3. Starta om `npm run dev`. `/boka` läser nu lediga tider från databasen.
 
+I bokningsformuläret krävs kundens e-post för bekräftelse och påminnelse. Telefonnummer är valfritt. Kör även migrationen `20261004130000_customer_phone_optional.sql` på befintliga databaser så att bokningar utan telefon kan sparas.
+
 ### E-post och påminnelser
 
 - Transaktionsmejl skickas via Brevo när kunden angett e-post: bokningsbekräftelse med avbokningslänk, avbokningsbesked, mejl när admin flyttar tiden samt påminnelse. Mallarna innehåller tjänst, frisör, datum, klockslag, pris och adress från Admin > Inställningar. Fyll i `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` och valfritt `BREVO_SENDER_NAME` i `.env.local`; avsändaren måste vara verifierad i Brevo. Saknat/felande mejl påverkar inte själva bokningen.
@@ -238,7 +240,7 @@ pg_dump "$DATABASE_URL" --format=custom --schema=public --data-only --exclude-ta
 Återställningstest (gör det före launch och sedan med jämna mellanrum):
 
 1. Skapa ett tillfälligt Supabase-projekt.
-2. Kör migreringarna `...schema.sql`, `...rls.sql`, `...admin_roles.sql`, `...shop_geo.sql`, `...admin_mfa_setting.sql`, `...launch_confirmation.sql`, `...drop_in_text.sql`, `...staff_barber.sql`, `...daily_hours_10_20.sql` och `...booking_slot_holds.sql` (inte `...seed.sql`, den skulle ge dubbletter i `working_hours`).
+2. Kör migreringarna `...schema.sql`, `...rls.sql`, `...admin_roles.sql`, `...shop_geo.sql`, `...admin_mfa_setting.sql`, `...launch_confirmation.sql`, `...drop_in_text.sql`, `...staff_barber.sql`, `...daily_hours_10_20.sql`, `...booking_slot_holds.sql` och `...customer_phone_optional.sql` (inte `...seed.sql`, den skulle ge dubbletter i `working_hours`).
 3. Återställ: `pg_restore --data-only --disable-triggers --no-owner -d "$TEST_DATABASE_URL" sh-cutz-data.dump`.
 4. Jämför antal rader: `select count(*) from bookings;` (samt `services`, `barbers`, `working_hours`, `shop_settings`) mot produktionsprojektet.
 5. Kontrollera att en bokning ser rätt ut och att exclusion constrainten finns kvar (`\d bookings`).

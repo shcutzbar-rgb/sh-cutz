@@ -10,6 +10,10 @@ export type EmailBooking = {
   startAt: string;
   endAt: string;
   priceSek: number;
+  shopName?: string;
+  shopAddress?: string;
+  shopPhone?: string;
+  bookingUrl?: string;
 };
 
 export type RenderedEmail = { subject: string; text: string; html: string };
@@ -27,14 +31,13 @@ export const cancelDeadlineHours = BOOKING_CONFIG.cancelDeadlineMinutes / 60;
 
 export function detailRows(b: EmailBooking): [string, string][] {
   const tz = siteConfig.timezone;
-  const { address } = siteConfig;
   return [
     ["Tjänst", b.serviceName],
     ["Frisör", b.barberName],
     ["Datum", formatDateLongIn(b.startAt, tz)],
     ["Tid", `${formatTimeIn(b.startAt, tz)}–${formatTimeIn(b.endAt, tz)}`],
     ["Pris", formatPrice(b.priceSek)],
-    ["Adress", `${address.street}, ${address.area}, ${address.city}`],
+    ["Adress", b.shopAddress || `${siteConfig.address.street}, ${siteConfig.address.area}, ${siteConfig.address.city}`],
   ];
 }
 
@@ -54,18 +57,24 @@ export function detailsHtml(b: EmailBooking): string {
   return `<table role="presentation" style="border-collapse:collapse;margin:16px 0">${rows}</table>`;
 }
 
-export function footerText(): string {
-  return `${siteConfig.name}\n${siteConfig.address.street}, ${siteConfig.address.city}\nTelefon: ${siteConfig.phone}`;
+export function footerText(b?: EmailBooking): string {
+  const name = b?.shopName || siteConfig.name;
+  const address = b?.shopAddress || `${siteConfig.address.street}, ${siteConfig.address.city}`;
+  const phone = b?.shopPhone || siteConfig.phone;
+  return `${name}\n${address}\nTelefon: ${phone}`;
 }
 
-export function layoutHtml(heading: string, bodyHtml: string): string {
+export function layoutHtml(heading: string, bodyHtml: string, booking?: EmailBooking): string {
+  const name = booking?.shopName || siteConfig.name;
+  const address = booking?.shopAddress || `${siteConfig.address.street}, ${siteConfig.address.city}`;
+  const phone = booking?.shopPhone || siteConfig.phone;
   return `<!doctype html>
 <html lang="sv">
 <body style="margin:0;padding:24px;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;color:#171717">
 <div style="max-width:560px;margin:0 auto;background:#ffffff;padding:24px;border-radius:8px">
 <h1 style="margin:0 0 16px;font-size:22px">${escapeHtml(heading)}</h1>
 ${bodyHtml}
-<p style="margin:24px 0 0;font-size:13px;color:#666">${escapeHtml(siteConfig.name)}<br>${escapeHtml(siteConfig.address.street)}, ${escapeHtml(siteConfig.address.city)}<br>Telefon: ${escapeHtml(siteConfig.phone)}</p>
+<p style="margin:24px 0 0;font-size:13px;color:#666">${escapeHtml(name)}<br>${escapeHtml(address)}<br>Telefon: ${escapeHtml(phone)}</p>
 </div>
 </body>
 </html>`;

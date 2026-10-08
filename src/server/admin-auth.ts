@@ -68,7 +68,10 @@ async function isMfaEnforced(supabase: SupabaseClient): Promise<boolean> {
 }
 
 export async function resolveAdmin(): Promise<AdminResolution> {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  ) {
     return { status: "anonymous" };
   }
 
