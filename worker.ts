@@ -16,7 +16,25 @@ export default Sentry.withSentry(
     beforeSend: scrubSentryEvent,
   }),
   {
-    fetch: handler.fetch,
+    async fetch(request, env, ctx) {
+      try {
+        return await handler.fetch(request, env, ctx);
+      } catch (error) {
+        console.error("Unhandled Worker request error", error);
+        try {
+          Sentry.captureException(error);
+        } catch {
+          // Error reporting must not turn a handled failure into a Worker exception.
+        }
+        return new Response("Internal Server Error", {
+          status: 500,
+          headers: {
+            "Cache-Control": "no-store",
+            "Content-Type": "text/plain; charset=utf-8",
+          },
+        });
+      }
+    },
 
     async scheduled(_event, env, ctx) {
       if (!env.CRON_SECRET || !env.WORKER_SELF_REFERENCE) {
