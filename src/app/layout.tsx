@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 		template: `%s | ${siteConfig.name}`,
 	},
 	description: siteConfig.description,
+	icons: { icon: { url: "/favicon.png", type: "image/png" } },
 	openGraph: { type: "website", locale: "sv_SE", siteName: siteConfig.name },
 	twitter: { card: "summary_large_image" },
 };
@@ -37,9 +38,6 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="sv">
-			<head>
-				<link rel="icon" href="/favicon.svg" type="image/svg+xml"></link>
-			</head>
 			<body
 				className={`${inter.variable} ${oswald.variable} flex min-h-screen flex-col antialiased`}
 			>
