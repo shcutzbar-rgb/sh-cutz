@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "node scripts/patch-opennext-manifest.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -14,9 +15,9 @@
     "check:launch": "node scripts/check-launch-ready.mjs",
     "predeploy": "npm run check:launch",
     "preupload": "npm run check:launch",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "node scripts/patch-opennext-manifest.mjs && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "node scripts/patch-opennext-manifest.mjs && opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "preview": "node scripts/patch-opennext-manifest.mjs && opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
   },
   "dependencies": {

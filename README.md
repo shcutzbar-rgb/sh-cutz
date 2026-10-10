@@ -159,6 +159,16 @@ supabase/migrations/ SQL-migreringar
 
 Förutsättningar: Cloudflare-konto, domänen i Cloudflare (för enklast DNS), Supabase-, Brevo- och (valfritt) Sentry-konto, samt `npx wrangler login`.
 
+### Next.js 16.4 och OpenNext
+
+OpenNext 1.20.9 bäddar inte automatiskt in Next.js 16.4:s `server/preview-props.json`.
+Det orsakar HTTP 500 vid serverstart (`loadManifest` / `getPreviewProps`), även om statiska bilder fungerar.
+`scripts/patch-opennext-manifest.mjs` lägger till manifestet i adapterns bygglista via `postinstall`
+och före deploy/upload/preview. GitHub/Cloudflare-bygget ska köra `npm ci` utan `--ignore-scripts`.
+Om installationsskript är avstängda, kör `node scripts/patch-opennext-manifest.mjs` före OpenNext-bygget.
+Fixen testas med `node --test scripts/patch-opennext-manifest.test.mjs`; en ändrad adapterimplementation
+stoppar med ett tydligt fel så att kompatibiliteten granskas vid uppgradering.
+
 ### 1. Supabase-projekt
 
 1. Skapa ett projekt i en EU-region. Notera URL, anon-nyckel och service role-nyckel (Project settings > API).
