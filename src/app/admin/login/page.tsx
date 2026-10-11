@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { LoginPasswordField } from "@/components/admin/LoginPasswordField";
 import { Turnstile } from "@/components/Turnstile";
 import { getTurnstileSiteKey } from "@/lib/turnstile";
 import { MFA_LOGIN_PATH, MFA_SETUP_PATH, resolveAdmin } from "@/server/admin-auth";
@@ -49,19 +50,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           </label>
           <input id="email" name="email" type="email" autoComplete="username" required className={inputClass} />
         </div>
-        <div>
-          <label htmlFor="password" className="text-sm font-medium">
-            Lösenord
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            className={inputClass}
-          />
-        </div>
+        <LoginPasswordField className={inputClass} />
         <Turnstile siteKey={getTurnstileSiteKey()} name="cf-turnstile-response" />
         <button
           type="submit"
