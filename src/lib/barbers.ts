@@ -7,7 +7,7 @@ export const staticBarbers: Barber[] = [
     id: "00000000-0000-4000-8000-0000000000b1",
     name: "Shabir",
     bio: "Barberare på SH-Cutz på Södermalm. Specialiserad på fades och skäggtrimning.",
-    photoUrl: null,
+    photoUrl: "/shabir.png",
     isActive: true,
   },
 ];

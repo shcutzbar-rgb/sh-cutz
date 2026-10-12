@@ -33,7 +33,10 @@ export const barberSchema = z.object({
     .string()
     .trim()
     .max(500)
-    .refine((v) => v === "" || /^https:\/\/\S+$/.test(v), "Bildadressen måste börja med https://"),
+    .refine(
+      (v) => v === "" || /^\/[a-zA-Z0-9_\-./]+$/.test(v) || /^https:\/\/\S+$/.test(v),
+      "Bildadressen måste börja med / eller https://",
+    ),
   isActive: checkbox,
 });
 

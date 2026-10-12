@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import { patchManifestGlob } from "./patch-opennext-manifest.mjs";
 
 test("includes Next.js preview props in the OpenNext manifest glob", () => {

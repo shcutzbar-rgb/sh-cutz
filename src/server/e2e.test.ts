@@ -67,6 +67,9 @@ const rejection = async (p: Promise<unknown>) => {
 };
 
 beforeAll(async () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(NOW);
+
   process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service";
 
@@ -88,6 +91,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await pg.close();
+  vi.useRealTimers();
 });
 
 beforeEach(async () => {
@@ -167,7 +171,7 @@ describe("tillgänglighet och bokning", () => {
   });
 
   it("reserverar valt datum för första kunden medan hen fyller i formuläret", async () => {
-    const holdNow = new Date();
+    const holdNow = NOW;
     const firstCustomer = input(at("08:00"), { holdToken: "00000000-0000-4000-8000-000000000101" });
     const secondCustomer = input(at("08:00"), { holdToken: "00000000-0000-4000-8000-000000000102" });
     await claimSlotHold({
@@ -190,7 +194,7 @@ describe("tillgänglighet och bokning", () => {
   });
 
   it("ger bara en av två samtidiga kunder en reservation för samma tid", async () => {
-    const holdNow = new Date();
+    const holdNow = NOW;
     const claims = ["00000000-0000-4000-8000-000000000111", "00000000-0000-4000-8000-000000000112"].map((holdToken) =>
       claimSlotHold({ serviceId: SERVICE, barberId: BARBER, startAt: at("08:00"), holdToken }, holdNow),
     );

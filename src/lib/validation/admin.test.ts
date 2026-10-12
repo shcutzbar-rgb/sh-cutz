@@ -29,10 +29,11 @@ describe("serviceSchema", () => {
 });
 
 describe("barberSchema", () => {
-  it("kräver https för bildadress men tillåter tom", () => {
+  it("kräver https eller lokal sökväg för bildadress men tillåter tom", () => {
     const base = { name: "Shabir", bio: "" };
     expect(barberSchema.safeParse({ ...base, photoUrl: "" }).success).toBe(true);
     expect(barberSchema.safeParse({ ...base, photoUrl: "https://example.com/a.jpg" }).success).toBe(true);
+    expect(barberSchema.safeParse({ ...base, photoUrl: "/shabir.png" }).success).toBe(true);
     expect(barberSchema.safeParse({ ...base, photoUrl: "javascript:alert(1)" }).success).toBe(false);
     expect(barberSchema.safeParse({ ...base, photoUrl: "http://example.com/a.jpg" }).success).toBe(false);
   });

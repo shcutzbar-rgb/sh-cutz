@@ -19,9 +19,9 @@ function BarberFields({ b, prefix }: { b?: BarberRow; prefix: string }) {
       </div>
       <div>
         <label htmlFor={`${prefix}-photo`} className={ui.label}>
-          Bild-URL (https, valfri)
+          Bild (lokal sökväg eller https, valfri)
         </label>
-        <input id={`${prefix}-photo`} name="photoUrl" type="url" defaultValue={b?.photo_url ?? ""} maxLength={500} className={ui.input} />
+        <input id={`${prefix}-photo`} name="photoUrl" type="text" defaultValue={b?.photo_url ?? ""} maxLength={500} placeholder="/shabir.png eller https://..." className={ui.input} />
       </div>
       <div className="sm:col-span-2">
         <label htmlFor={`${prefix}-bio`} className={ui.label}>
